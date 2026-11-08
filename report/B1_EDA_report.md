@@ -1,12 +1,5 @@
 # B1 – Phân tích bộ dữ liệu (EDA): Diabetes Health Indicators (BRFSS 2015)
 
-**Người phụ trách:** Thành viên B (Data & Pipeline) — 25%
-**Công cụ:** script `eda_kaggle.py` chạy trong Kaggle Notebook (offline), seed = 42
-**Nguồn dữ liệu:** Kaggle `alexteboul/diabetes-health-indicators-dataset` (3 tệp CSV, tổng 253.680 / 70.692 / 253.680 dòng)
-**Phụ lục số liệu:** `b1_eda_out/` — 9 file CSV + 30 biểu đồ (tái lập lại bằng 1 lệnh)
-
----
-
 ## 1. Mô tả bộ dữ liệu
 
 Bộ dữ liệu được Alex Teboul dựng từ khảo sát **BRFSS 2015** (CDC — Behavioral Risk Factor
@@ -127,11 +120,4 @@ phi tuyến bổ sung. Nhóm dùng **cả hai** để tránh kết luận thiên
 | Bảng lift + correlation | A (SHAP) | Đặt giả thuyết: SHAP toàn cục phải đứng đầu ở `GenHlth`, `HighBP`, `BMI`, `DiffWalk` |
 | Cùng split/seed cho mọi mô hình | C (baseline) | Chạy LogReg / RF / DT trên **cùng pipeline này** để so sánh công bằng |
 
-## Phụ lục — cách tái lập
 
-```
-# Trong Kaggle Notebook: Add Input -> dataset "diabetes-health-indicators-dataset"
-# -> paste notebooks/b1_eda_kaggle.ipynb -> Run All
-# -> sinh ra b1_eda_out/: 9 file CSV so lieu + 30 bieu do + block "INSIGHTS & B3 ACTIONS"
-```
-Cùng seed (42) và cùng phiên bản thư viện → tái lập đúng các số trong báo cáo này.
