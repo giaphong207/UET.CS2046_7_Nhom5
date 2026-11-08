@@ -1,0 +1,13 @@
+
+data/
+b1_eda_out/
+b2_out/
+*_out/
+
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.venv/
+
+
+.ipynb_checkpoints/
