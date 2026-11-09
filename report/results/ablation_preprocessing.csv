@@ -1,4 +1,0 @@
-factor,setting,n_final,cv_AP,cv_AP_std,cv_recall_1,cv_f1_macro,cv_auc,delta_AP
-preprocessing,dedup+noise-majority,227908,0.4094,0.0039,0.158,0.5822,0.8162,0.0
-preprocessing,dedup+noise-keep,229474,0.4056,0.0076,0.1471,0.574,0.8059,-0.0038
-preprocessing,nodup+noise-majority,227908,0.4068,0.0022,0.1546,0.5798,0.8158,-0.0026
