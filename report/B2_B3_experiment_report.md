@@ -1,6 +1,5 @@
 # B2/B3 – Thiết kế thực nghiệm & Kết quả (nền SP2)
 
-**Phụ trách:** Thành viên B (Data & Pipeline) — đồng sở kết quả với A (mô hình) và C (baseline)
 **Môi trường:** Kaggle Notebook (GPU T4), seed = 42, LightGBM + imbalanced-learn, thời gian chạy ~58 phút (đo ở LightGBM CPU; bản GPU build sẵn có trong image Kaggle)
 **Mã nguồn:** `Src/b2_b3_pipeline.py` · Số liệu gốc: `report/results/` (7 CSV + 3 file `.npy` chỉ số split)
 **Biểu đồ:** `report/figures/b2b3_*.png` (sinh tự động bằng `Src/make_report_figures.py`)
@@ -36,7 +35,6 @@ Dữ liệu gốc 253.680 dòng. Ba biến tiền xử lý, mỗi dòng chỉ đ
 | **LightGBM (A, đề xuất)** | 0,4357 | **0,4364** | 0,4346 | 0,4357 | 0,4225 |
 | Stacking RF+LGBM (A) | 0,4361 | 0,4366 | 0,3328 | 0,3416 | 0,4253 |
 
-*(AP CV trung bình; ± std đầy đủ trong `grid_model_x_resample.csv`)*
 
 **Quy tắc chọn:** AP cao nhất trong nhóm F1-macro ≥ max − 0,01, tie-break theo recall lớp bệnh → **class_weight (AP = 0,4364, recall lớp bệnh = 0,780)**.
 
@@ -53,7 +51,7 @@ Các đọc chính: (i) class_weight nâng recall lớp bệnh từ 0,158 (none)
 | Logistic (VAL) | 0,4137 | 0,572 | 0,386 | 0,671 | 0,819 | 0,357 |
 | Decision Tree | 0,1897 | 0,288 | 0,295 | 0,585 | 0,585 | 0,171 |
 
-AP bất biến giữa 2 ngưỡng của cùng mô hình (đúng tính chất của chỉ số). Ngưỡng tối ưu F1 trên VAL đã chọn: ~0,4 (giá trị exact trong `final_test_metrics.csv`).
+AP bất biến giữa 2 ngưỡng của cùng mô hình (đúng tính chất của chỉ số). “Ngưỡng tối ưu F1 trên VAL đã chọn: 0,65 cho LightGBM (0,64 logistic; 0,26 RF; 0,265 stacking — giá trị exact trong final_test_metrics.csv). Ngưỡng tối ưu nằm trên 0,5 vì mô hình xác suất hiếm khi cho điểm > 0,5 cho lớp bệnh (lớp chỉ chiếm 13,9%) → mốc 0,5 mặc định thiên lệch sang dự đoán âm.”
 
 ## 5. Ý nghĩa thống kê (paired bootstrap 1.000 lần)
 
