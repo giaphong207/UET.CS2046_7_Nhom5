@@ -1,0 +1,6 @@
+GHI CHU: file nay luu stdout cua lan chay gan nhat (pipe lenh).
+Bang cach tao lai:
+    python Src/b1_eda.py            > report/results/run_log_b1.txt 2>&1
+    python Src/b2_b3_pipeline.py     > report/results/run_log_b2b3.txt 2>&1
+    python Src/make_report_figures.py
+Ket qua so sanh voi cac file .csv trong cung thu muc (cung seed = 42).
