@@ -15,7 +15,7 @@ N_FOLDS  = 5
 N_BOOT   = 1000
 FAST     = False    # True = bo qua bootstrap (smoke test)
 N_JOBS   = 2        # Kaggle: 2 CPU
-OUT      = Path("b2_out")
+OUT = Path("report/results")
 OUT.mkdir(exist_ok=True)
 
 F_2L = "diabetes_binary_health_indicators_BRFSS2015.csv"      # bai chinh 86/14
