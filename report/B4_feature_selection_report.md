@@ -71,20 +71,4 @@ Fruits, AnyHealthcare ~0,0001). Đây là **bộ khung để A đối chiếu v�
 kể** (hệ quả trực tiếp: "selected" trùng "full"). Không suy diễn — kết luận trung thực là
 chọn lọc không tạo khác biệt đo được trên bộ này.
 
-## 7. Thảo luận (ưu điểm – hạn chế – hướng phát triển, nội dung 8)
 
-- **Ưu điểm:** selector-in-fold (đúng cách, tránh leakage); cùng split B2/B3 nên so sánh
-  trực tiếp được; AP/AUC B4 = B2/B3 (bằng chứng reproducibility mạnh); permutation
-  importance trên tập val làm **kiểm chứng độc lập** cho SHAP của A (không cùng nguồn).
-- **Đối chiếu A (SHAP):** nếu ranking SHAP ≈ permutation importance (BMI, GenHlth, Age,
-  HighBP, HighChol dẫn đầu) → mô hình học đúng thứ lâm sàng (khớp EDA B1); nếu lệch →
-  giải thích do tương quan giữa các đặc trưng (SHAP gán công theo cây, MI/perm theo
-  tín hiệu biên).
-- **Hạn chế:** (1) chọn lọc không giúp (21 đặc trưng đã gọn, k=21 là đỉnh) — kết luận
-  "không cần chọn lọc" cũng là một kết luận; (2) recall/MCC ở ngưỡng VAL lệch nhẹ với
-  B2/B3 (0.620/0.374 vs 0.595/0.372) do **LightGBM đa luồng** gây sai lệch float ~1e-6
-  trên vùng F1 phẳng → **khắc phục: đặt `deterministic=True`** (hoặc `num_threads=1`)
-  ở bước nhạy ngưỡng để tái lập 100%.
-- **Hướng phát triển:** (a) loại 15 đặc trưng imp≈0 cho mô hình **gọn/di động** (chấp nhận
-  −0,002 AP, k=18) — có giá trị về khả năng triển khai; (b) kết hợp chọn lọc + SHAP để
-  xác định tập đặc trưng tối thiểu đủ cho AUC ≥ 0,82; (c) mở rộng sang bài 3 lớp.
