@@ -1,6 +1,4 @@
 # B4 – Chọn lọc đặc trưng (Feature Selection): Diabetes BRFSS 2015
-
-**Phụ trách:** Thành viên B (Data & Pipeline) — kết quả dùng cho phần SHAP/XAI của A
 **Môi trường:** Kaggle Notebook, seed = 42, LightGBM + imbalanced-learn, thời gian ~11 phút (667s)
 **Mã nguồn:** `Src/b4_feature_selection.py` · Số liệu: `report/results/b4_*.csv` · Hình: `report/figures/b4_*.png`
 
@@ -90,12 +88,3 @@ chọn lọc không tạo khác biệt đo được trên bộ này.
 - **Hướng phát triển:** (a) loại 15 đặc trưng imp≈0 cho mô hình **gọn/di động** (chấp nhận
   −0,002 AP, k=18) — có giá trị về khả năng triển khai; (b) kết hợp chọn lọc + SHAP để
   xác định tập đặc trưng tối thiểu đủ cho AUC ≥ 0,82; (c) mở rộng sang bài 3 lớp.
-
-## 8. Tái lập
-
-```
-Kaggle: Add Input dataset -> Cell: !pip install -q lightgbm imbalanced-learn
-        -> paste Src/b4_feature_selection.py -> Run (~11 phút)
--> report/results/b4_*.csv + report/figures/b4_*.png
-Doi chieu: AP/AUC (0,4368/0,826) phai trung B2/B3 (LightGBM + class_weight)
-```
