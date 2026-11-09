@@ -50,7 +50,7 @@ if not _founds:
         f"  (Da tu dong tim thu muc 'input' quanh {Path.cwd()})")
 print(f"[OK] Tim thay {len(_founds)} CSV (noi dung: {_founds[0][1].parent})")
 
-OUT = Path("b1_eda_out")
+OUT = Path("report/results")
 OUT.mkdir(exist_ok=True)
 (OUT / "plots").mkdir(exist_ok=True)
 
