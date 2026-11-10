@@ -1,0 +1,47 @@
+# ============================================================================
+#  run_log.txt - STDOUT that cu lan chay (bong chung reproducibility cho SP2)
+# ============================================================================
+#  CACH SINH (chay tren ma' y - KAGGLE hoac local voi du lieu 2-lop unbal):
+#
+#      python code/b1_eda.py                > run_log_b1.txt     2>&1
+#      python code/b2_b3_pipeline.py        > run_log_b2b3.txt   2>&1
+#      python code/b4_feature_selection.py  > run_log_b4.txt     2>&1
+#      cat run_log_b1.txt run_log_b2b3.txt run_log_b4.txt > run_log.txt
+#      rm run_log_b1.txt run_log_b2b3.txt run_log_b4.txt
+#
+#  Noi dung run_log.txt phai chua (de nguoi cham do duoc du):
+#   - timestamp + ten may/trong (Kaggle GPU/CPU)
+#   - phien ban thu vien (pandas / numpy / sklearn / lightgbm / imblearn)
+#   - seed = 42
+#   - so dong sau dedup / majority-vote (phai = 227,908)
+#   - split: 159,535 / 34,186 / 34,187
+#   - toan bo dong "[cv] ..." + "[test] ..." + "[boot] ..."
+#   - dong cuoi "[OK] XONG sau <N>s"
+#
+#  KIEM CHUNG: sau khi chay lai, so 3 CSV (grid / final / bootstrap) phai
+#  TRUNG TUYET DOI voi ban da commit (cung seed, cung split, cung thu vien).
+#
+#  Duoi day la MAN HINH dang hinh thuc (moi dong bat dau bang prefix chuan
+#  do code in ra). Ban chay thuc va thay dung stdout that:
+# ============================================================================
+# [timestamp] 2026-11-09 21:37  |  env=kaggle-gpu-t4  |  seed=42
+# [deps] pandas=? numpy=? sklearn=? lightgbm=? imblearn=?
+# [OK] Du lieu: /kaggle/input/datasets/alexteboul/diabetes-health-indicators-dataset/diabetes_binary_health_indicators_BRFSS2015.csv
+# [prep] raw=253,680 -> final=227,908 (dedup + majority-vote)
+# [split] train=159,535 val=34,186 test=34,187 (ty le lop benh 0.1471/0.1471/0.1471)
+# [cv] logistic x none AP=0.4094 ...  (5 x 5 dong, xem grid_model_x_resample.csv)
+# [CHON] strategy = class_weight (CV AP=0.4364, recall_1=0.780)
+# [test] primary thr_0.5 AP=0.4368 R1=0.776 P1=0.322 F1m=0.636 AUC=0.826 MCC=0.366
+# [test] primary thr_val_maxF1 AP=0.4368 R1=0.595 P1=0.394 F1m=0.677 AUC=0.826 MCC=0.372
+# [boot] primary_vs_logistic dAP=+0.0231 95%CI[+0.0162,+0.0303] p=0.0000 -> DANG KE
+# [boot] primary_vs_rf        dAP=+0.0436 95%CI[+0.0354,+0.0510] p=0.0000 -> DANG KE
+# [boot] primary_vs_stacking  dAP=+0.0000 95%CI[-0.0020,+0.0021] p=0.948 -> KHONG
+# [OK] XONG sau 3459s -> report/results/B2_B3/
+#
+# [B4] [CHON] method=baseline k=21 (CV AP=0.4364)
+# [B4] [test] all_features thr_0.5 AP=0.4368 AUC=0.826 (TRUNG B2B3 -> reproducibility)
+# [B4] [OK] XONG sau 667s -> report/results/B4/
+# ============================================================================
+#  LUU Y: chi sua thuc te sau khi da chay (thay chi dan tren bang stdout that).
+#  Neu chua chay: de file nay la chi dan, va ghi trong bao cao rang
+#  "run_log se duoc thay bang stdout that khi chay truyen" - CHUNG THUC.
