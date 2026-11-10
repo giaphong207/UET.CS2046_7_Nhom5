@@ -1,14 +1,5 @@
 # SP3 – Nhật ký sử dụng AI (AI Usage Log)
 
-**Nhóm 5 – CS2046 Trí tuệ nhân tạo** | Phụ trách chính: D (QA) · Ghi nhận các tương tác: B
-**Định dạng theo Mục II.2.1 của đề bài** (11 trường/tương tác). "Prompt đầy đủ / Phản hồi đầy đủ"
-được trích dẫn nguyên văn trong **đính kèm `SP3_appendix_raw.md`** (đề cho phép: "có thể đính kèm
-lịch sử hội thoại gốc và sử dụng bảng tổng hợp").
-
-> Quy tắc kiểm chứng chung của nhóm (đọc trước khi chấm): mọi phản hồi AI được (i) chạy lại
-> trên dữ liệu thật trước khi áp dụng, (ii) đối chiếu chéo 3 tệp CSV và với mô tả dataset trên
-> Kaggle, (iii) nội dung do nhóm tự thêm được phân biệt rõ ở cột "Nội dung chỉnh sửa hoặc loại bỏ".
-
 ## Tổng quan (danh mục tương tác)
 
 | Mã | Mục đích | Kết quả quyết định |
