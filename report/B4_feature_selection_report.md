@@ -1,6 +1,5 @@
 # B4 – Chọn lọc đặc trưng (Feature Selection): Diabetes BRFSS 2015
 
-**Phụ trách:** Thành viên B (Data & Pipeline) — kết quả dùng cho phần SHAP/XAI của A
 **Môi trường:** Kaggle Notebook, seed = 42, LightGBM + imbalanced-learn, thời gian ~11 phút (667s)
 **Cơ sở học thuật:** `report/SP1_survey_report.md` §2.6 (B4) + `report/references.bib`
 **Mã nguồn:** `code/b4_feature_selection.py` · Số liệu: `report/results/B4/b4_*.csv` · Hình: `report/figures/B4/b4_*.png`
