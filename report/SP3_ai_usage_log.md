@@ -37,7 +37,7 @@
 | Cách kiểm chứng | Chạy lại cùng seed → số trùng; đối chiếu chéo 3 tệp (35.346 ca dương); đối chiếu mô tả Kaggle (253.680 dòng, 21 features) |
 | Kết quả áp dụng | Chốt hướng bài toán tại họp W1; B3 triển khai đúng thứ tự + tiêu chí |
 
-## AI-005 — Pipeline B2/B3 theo protocol đánh giá
+ Pipeline B2/B3 theo protocol đánh giá
 
 | Trường | Nội dung |
 |---|---|
