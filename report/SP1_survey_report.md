@@ -1,6 +1,5 @@
 # SP1 – Khảo sát phương pháp & lựa chọn mô hình (Survey & Method Selection)
 
-**Phụ trách:** Thành viên B (Data & Pipeline)
 **Vai trò trong SP:** SP1 cung cấp **cơ sở học thuật** cho mọi lựa chọn trong SP2
 (B2/B3/B4): tại sao chọn AP làm chỉ số chính, tại sao so đúng 5 chiến lược mất cân bằng,
 tại sao selector phải fit trong fold, và tại sao majority-vote cho label noise.
