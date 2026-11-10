@@ -174,10 +174,3 @@
 | Nội dung chỉnh sửa hoặc loại bỏ | **Sửa (do nhóm + AI audit):** [2] → He/Garcia/Li TNN 2008 (DOI 10.1109/TNN.2008.2008108); [5] thêm DOI 10.1109/IJCNN.2006.1471066 (ghi rõ: tra doi.org trước khi in); thêm [16] LightGBM (Ke et al., NeurIPS 2017); thêm [17] Altmann et al. (permutation importance); đánh dấu [13] Ragwitz & Rish "(tra DOI/trước khi in chính thức)" |
 | Cách kiểm chứng | (i) Crossref/doi.org cho từng DOI; (ii) đối chiếu IEEE Xplore (TNN 2008 ADASYN); (iii) so số [9]/[16] giữa nội dung SP1 và bib; (iv) kiểm tra "mỗi mục bib ↔ trích dẫn trong báo cáo khớp tên/tác giả/năm" |
 | Kết quả áp dụng | `references.bib` cập nhật (17 mục) + SP1 (cập nhật citation) → đủ 3 sản phẩm |
-
-## Ghi chú cuối (cho D khi tổng hợp SP3)
-
-1. **Thời gian:** các mốc còn dấu `≈` — D cập nhật giờ chính xác; chụp thời điểm chạy cell trong notebook làm bằng chứng thời gian.
-2. **Đính kèm:** `SP3_appendix_raw.md` (prompt + phản hồi gốc, trích dẫn thực). Export từ Claude desktop (chức năng copy/đính lịch sử).
-3. **Trọng tâm chấm:** đề ghi rõ SP3 **không chấm theo số prompt** mà theo **chất lượng kiểm chứng + lý giải**. Hai ví dụ "điểm" rõ nhất: **AI-003** (loại block kết quả EDA sai target) và **AI-010** (audit phát hiện mục tham chiếu [2] nghi ngờ sai, thay bằng nguyên bản có DOI). Giữ nguyên, không rút gọn.
-4. **Nguyên tắc:** nội dung do AI đề xuất và nội dung do nhóm tự làm được **phân biệt rõ ở cột "chỉnh sửa hoặc loại bỏ"** trong mỗi mục.
