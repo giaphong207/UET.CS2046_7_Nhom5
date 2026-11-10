@@ -1,6 +1,5 @@
 # B2/B3 – Thiết kế thực nghiệm & Kết quả (nền SP2)
 
-**Phụ trách:** Thành viên B (Data & Pipeline) — đồng sở kết quả với A (mô hình) và C (baseline)
 **Môi trường:** Kaggle Notebook (GPU T4), seed = 42, LightGBM + imbalanced-learn, thời gian chạy ~58 phút (đo ở LightGBM CPU; bản GPU build sẵn có trong image Kaggle)
 **Cơ sở học thuật:** `report/SP1_survey_report.md` (SP1) + `report/references.bib`
 **Mã nguồn:** `code/b2_b3_pipeline.py` · Số liệu gốc: `report/results/B2_B3/` (7 CSV + 3 file `.npy` chỉ số split)
