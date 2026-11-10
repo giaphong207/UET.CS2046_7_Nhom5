@@ -33,38 +33,17 @@ sát + trích dẫn" — các report B* là "báo cáo kết quả thực nghi�
 
 Dataset Kaggle: **`diabetes-health-indicators-dataset`** (Alex Teboul / CDC BRFSS 2015).
 
-Chạy trên Kaggle: *Notebook → File → Add Input* → chọn dataset đó. Cả 3 file
-(`diabetes_012`, `diabetes_binary`, `diabetes_binary_5050split`) nằm cùng folder.
-Khi chạy local, đặt file vào `./data/` (script tự tìm `input/`, `data/`, `/kaggle/input`).
 
 ## Cài đặt & chạy
 
 ```bash
 pip install -r requirements.txt
-python code/b1_eda.py               # B1: EDA 3 file CSV (~1 phút)
-python code/b2_b3_pipeline.py        # B2+B3: pipeline chính (~58 phút CPU, GPU nhanh hơn)
+python code/b1_eda.py               # B1: EDA 3 file CSV 
+python code/b2_b3_pipeline.py        # B2+B3: pipeline chính
 python code/make_report_figures.py   # Vẽ figures B2/B3 từ CSV kết quả
-python code/b4_feature_selection.py  # B4: chọn lọc đặc trưng (~11 phút, chạy SAU B2/B3)
+python code/b4_feature_selection.py  # B4: chọn lọc đặc trưng 
 ```
 
-> **Ghi chú LightGBM GPU:** `lightgbm-gpu` không có trên PyPI — build từ source:
-> `CMAKE_ARGS="-DUSE_CUDA=ON" python -m pip install --upgrade --no-binary :all: lightgbm`.
-> Script tự động probe GPU (`nvidia-smi`) và fallback CPU nếu không có build GPU —
-> toàn bộ kết quả số không thay đổi khi chạy CPU (seed cố định, chỉ khác thời gian).
-> Kaggle đã có LightGBM GPU build sẵn trong image, không cần build thêm.
-
-## Protocol (công bằng giữa các thành viên A/B/C)
-
-- Chỉ số chính: **AP (Average Precision)** — bất biến theo ngưỡng, phù hợp 86/14.
-- Ngưỡng: so `0,5` (mặc định) và **ngưỡng F1 tối ưu chọn trên VAL rồi khoá** —
-  test set không bao giờ tham gia chọn tham số.
-- Resample **luôn nằm trong fold CV / trên tập train** (không leakage).
-- Seed = 42 ở mọi bước ngẫu nhiên; chỉ số split lưu trong `report/results/B2_B3/idx_*.npy`
-  (B4 đọc lại file này để giữ cùng split; nếu thiếu thì tự tách mới — deterministic seed 42).
-- A/C thay model: chỉ sửa hàm `build_model()` (PHẦN 5 trong `code/b2_b3_pipeline.py`
-  và `code/b4_feature_selection.py`), không sửa tiền xử lý, split, ngưỡng hay đánh giá.
-- **N_JOBS = 2** ở mọi script (Kaggle chỉ có 2 CPU — `n_jobs=-1` gây overhead
-  thread vượt trội, không tăng tốc).
 
 ## Kết quả chính (từ `report/results/`)
 
@@ -89,5 +68,5 @@ Ba file chỉ số split (`idx_train.npy`, `idx_val.npy`, `idx_test.npy`) do
 ## Tái lập
 
 Chạy lại các script trên cùng môi trường + seed 42 → số trong `report/results/*/*.csv`
-phải trùng tuyệt đối. Bằng chứng lần chạy nằm trong `report/results/B2_B3/run_log.txt`
-(hướng dẫn: chạy lại 4 lệnh ở mục "Cài đặt & chạy" và pipe stdout ra file).
+phải trùng . Két quả chạy nằm trong `report/results/B2_B3/run_log.txt`
+
