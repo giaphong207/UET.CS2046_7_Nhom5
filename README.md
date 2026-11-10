@@ -1,4 +1,3 @@
-# UET CS2046 – Nhóm 5: Dự đoán tiểu đường (BRFSS 2015)
 
 Pipeline + xử lý mất cân bằng lớp cho bài toán phân loại 2 lớp
 (`Diabetes_binary`, 86,1 / 13,9) trên bộ dữ liệu Diabetes Health Indicators
