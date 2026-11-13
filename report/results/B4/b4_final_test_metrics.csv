@@ -1,0 +1,5 @@
+AP,accuracy,balanced_acc,f1_macro,f1_class1,precision_1,recall_1,specificity,mcc,auc_roc,threshold,n_tp,n_fp,n_fn,n_tn,feature_set,n_features,strategy,threshold_rule
+0.4368,0.7263,0.7469,0.6361,0.4549,0.3217,0.7761,0.7177,0.3656,0.8259,0.5,3904,8232,1126,20925,all_features,21,class_weight,thr_0.5
+0.4368,0.7985,0.7247,0.6753,0.4753,0.3853,0.6201,0.8293,0.3745,0.8259,0.6336,3119,4976,1911,24181,all_features,21,class_weight,thr_val_maxF1
+0.4368,0.7263,0.7469,0.6361,0.4549,0.3217,0.7761,0.7177,0.3656,0.8259,0.5,3904,8232,1126,20925,selected,21,class_weight,thr_0.5
+0.4368,0.7985,0.7247,0.6753,0.4753,0.3853,0.6201,0.8293,0.3745,0.8259,0.6336,3119,4976,1911,24181,selected,21,class_weight,thr_val_maxF1
