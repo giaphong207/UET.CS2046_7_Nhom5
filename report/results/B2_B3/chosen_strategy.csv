@@ -1,2 +1,0 @@
-chosen_strategy,rule,cv_AP,cv_recall_1,seed,n_folds
-class_weight,AP cao nhat trong nhom F1macro >= max-0.01 tie-break recall_1,0.4364,0.7799,42,5

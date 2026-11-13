@@ -1,2 +1,0 @@
-selected_method,k,cv_AP,cv_recall_1,cv_f1_macro,rule,strategy,seed,n_folds
-baseline,21,0.4364,0.7799,0.6342,"AP cao nhat trong nhom F1macro >= max-0.01, tie-break recall_1",class_weight,42,5

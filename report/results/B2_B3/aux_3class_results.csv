@@ -1,3 +1,0 @@
-strategy,AP_class2,AP_class2_std,F1_macro,n_rows,note
-none,0.4389,0.0061,0.4028,253680,"SMOTE/ADASYN khong dung: lop 1 (tien duong) chi ~1,8%"
-class_weight,0.4119,0.0068,0.4267,253680,"SMOTE/ADASYN khong dung: lop 1 (tien duong) chi ~1,8%"

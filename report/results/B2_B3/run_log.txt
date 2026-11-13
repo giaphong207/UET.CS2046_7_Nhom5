@@ -1,9 +1,0 @@
-Huong dan tao log lan chay (commit std log vao day):
-
-    python code/b1_eda.py               > report/results/B1/run_log.txt 2>&1
-    python code/b2_b3_pipeline.py        > report/results/B2_B3/run_log.txt 2>&1
-    python code/b4_feature_selection.py  > report/results/B4/run_log.txt 2>&1
-    python code/make_report_figures.py
-
-Chung: seed = 42, split 70/15/15, chuan hoa theo protocol B2/B3.
-So ket qua: doi chieu voi cac file .csv trong cung thu muc.
