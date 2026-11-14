@@ -79,7 +79,7 @@ python src/evaluate_test.py
 
 | Thành viên | Vai trò | Nhiệm vụ chính |
 | :--- | :--- | :--- |
-| **Đinh Gia Phong (A)** | Lead Modeling | Cơ sở lý thuyết, huấn luyện mô hình cải tiến (`E4–E10`), SHAP |
+| **Bùi Ngọc Phú Hưng (A)** | Lead Modeling | Cơ sở lý thuyết, huấn luyện mô hình cải tiến (`E4–E10`), SHAP |
 | **Trần Tuấn Thành (B)** | Data & Pipeline | Khám phá dữ liệu (EDA), tiền xử lý, chia tập phân tầng `70-15-15` |
-| **Bùi Ngọc Phú Hưng (C)** | Baseline & Report | Huấn luyện mô hình cơ sở (`E0–E3`), tổng hợp bảng kết quả, viết báo cáo |
+| **Đinh Gia Phong (C)** | Baseline & Report | Huấn luyện mô hình cơ sở (`E0–E3`), tổng hợp bảng kết quả, viết báo cáo |
 | **Ngô Khánh Ngân (D)** | QA-Admin & AI Log | Quản trị Git, kiểm soát chống rò rỉ dữ liệu, smoke test tái lập, AI Usage Log (`SP3`) |
