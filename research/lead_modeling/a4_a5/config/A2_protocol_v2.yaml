@@ -1,0 +1,133 @@
+source:
+  file: De_cuong_Diabetes (1).pdf
+  edition: 03/11/2026
+  status: research_plan_only
+  review_date: '2026-11-16'
+project:
+  track: 1.2 Research Track
+  dataset: diabetes_binary_health_indicators_BRFSS2015.csv
+  target: Diabetes_binary
+  positive_label: 1
+  source_url: https://www.kaggle.com/datasets/alexteboul/diabetes-health-indicators-dataset
+  no_clinical_diagnostic_claims: true
+split:
+  train: 0.7
+  validation: 0.15
+  test: 0.15
+  stratify: true
+  seed: 42
+  save_indices: true
+  test_locked: true
+data_audit:
+- row_count
+- column_schema
+- missingness
+- allowed_ranges
+- class_prevalence
+- duplicate_feature_vectors
+- same_X_different_y
+- dataset_sha256
+cross_validation:
+  type: StratifiedKFold
+  folds: 3
+  seed: 42
+  configs_per_family_range:
+  - 10
+  - 15
+  selection_metric: average_precision
+  fit_preprocessing_in_fold_only: true
+models:
+  B0:
+    family: DummyClassifier
+    strategy: prior
+  B1:
+    family: LogisticRegression
+    preprocessing: train-fold fitted scaling/encoding
+  B2:
+    family: RandomForestClassifier
+  B3:
+    family: XGBClassifier
+  A1:
+    base: B3
+    change: class_weight / scale_pos_weight
+  A2:
+    base: A1
+    change: threshold selected by F1 on validation
+  A3:
+    base: A2
+    change: top k training-selected features
+    k_values:
+    - 21
+    - 15
+    - 10
+    - 5
+threshold:
+  reference: 0.5
+  selection: maximize_f1_validation
+  tie_rule: highest_threshold
+  report:
+  - precision
+  - recall
+  - specificity
+  - f1
+  - confusion_matrix
+feature_reduction:
+  k_values:
+  - 21
+  - 15
+  - 10
+  - 5
+  fit_ranking_on_training_only: true
+  primary_goal: AP_full_val - AP_k_val <= 0.01 absolute
+  use_test_for_selection: false
+metrics:
+  primary: average_precision
+  secondary:
+  - roc_auc
+  - precision
+  - recall
+  - specificity
+  - f1
+  - accuracy
+  - confusion_matrix
+  ap_implementation: sklearn.metrics.average_precision_score
+uncertainty:
+  method: paired_test_bootstrap
+  n_resamples: 1000
+  confidence_level: 0.95
+  comparison: difference in AP
+  paired_same_indices: true
+  conditional_on_fitted_models: true
+sensitivity:
+  duplicate_vector_group_split: optional
+  group_definition: unique feature vector X only, not respondent ID
+  disclose_label_disagreement: true
+optional_extension:
+  stacking: false
+  optuna_as_search_backend: true
+  shap_lime: false
+  only_after_core_completed: true
+artifacts:
+- dataset_audit.json
+- split_indices.npz
+- dataset_sha256.txt
+- config.yaml
+- versions.txt
+- cv_results.csv
+- validation_metrics.csv
+- test_metrics.csv
+- ablation.csv
+- feature_sets.json
+- pr_curve.png
+- roc_curve.png
+- confusion_matrix.png
+- bootstrap_ap_delta.csv
+- readme.md
+- ai_usage_log.md
+restrictions:
+  no_resampling_val_test: true
+  no_scaling_before_split: true
+  no_feature_selection_before_cv: true
+  no_model_selection_using_test: true
+  no_merging_dataset_versions: true
+  label_meaning_exact: true
