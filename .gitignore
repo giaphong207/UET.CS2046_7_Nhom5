@@ -1,4 +1,28 @@
-data/
+# ---- Dữ liệu gốc: tải từ Kaggle, KHÔNG đưa lên Git ----
+# (chỉ chặn file dữ liệu; vẫn cho phép commit file chỉ số chia tập
+#  như data/idx_train.npy, data/split_indices.npz)
 data/*.csv
+data/*.zip
+
+# ---- Kết quả thực nghiệm nặng và mô hình đã huấn luyện ----
+results/*
+!results/.gitkeep
+*.joblib
+*.pkl
+
+# ---- Rác môi trường Python / Jupyter ----
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ipynb_checkpoints/
+venv/
+.venv/
+.venv-*/
+
+# ---- Bí mật và rác hệ điều hành ----
+.env
+.env.*
+.DS_Store
+Thumbs.db
 
 
