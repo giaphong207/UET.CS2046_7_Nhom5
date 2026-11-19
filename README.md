@@ -28,7 +28,7 @@ UET.CS2046_7_Nhom5/
 2. **Vị trí lưu:** Đặt file CSV vào thư mục `data/` ở thư mục gốc dự án.
 3. **Mã kiểm chứng (Checksum):**
    * **Tên file:** `diabetes_binary_health_indicators_BRFSS2015.csv`
-   * **SHA-256:** `[Điền mã SHA-256 sau khi chạy kiểm tra]`
+   * **SHA-256:** `SHA-256`
 
 ---
 
