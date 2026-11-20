@@ -1,0 +1,41 @@
+[deps] lightgbm=OK | GPU=CPU (fallback)
+[deps] imbalanced-learn=OK
+[split] train/val/test = 177,576/38,052/38,052
+[tune X1_gaussian_nb] {'var_smoothing': np.float64(1e-09)} -> cv_AP=0.3415 (0.4s)
+[tune X1_gaussian_nb] {'var_smoothing': np.float64(7.742636826811278e-09)} -> cv_AP=0.3415 (0.4s)
+[tune X1_gaussian_nb] {'var_smoothing': np.float64(5.99484250318941e-08)} -> cv_AP=0.3415 (0.4s)
+[tune X1_gaussian_nb] {'var_smoothing': np.float64(4.6415888336127725e-07)} -> cv_AP=0.3415 (0.4s)
+[tune X1_gaussian_nb] {'var_smoothing': np.float64(3.5938136638046257e-06)} -> cv_AP=0.3417 (0.4s)
+[tune X1_gaussian_nb] {'var_smoothing': np.float64(2.782559402207126e-05)} -> cv_AP=0.3430 (0.4s)
+[tune X1_gaussian_nb] {'var_smoothing': np.float64(0.00021544346900318823)} -> cv_AP=0.3494 (0.4s)
+[tune X1_gaussian_nb] {'var_smoothing': np.float64(0.0016681005372000558)} -> cv_AP=0.3411 (0.4s)
+[tune X1_gaussian_nb] {'var_smoothing': np.float64(0.012915496650148827)} -> cv_AP=0.3127 (0.4s)
+[tune X1_gaussian_nb] {'var_smoothing': np.float64(0.1)} -> cv_AP=0.2895 (0.4s)
+[tune X1_gaussian_nb] CHON {'var_smoothing': np.float64(0.00021544346900318823)} (cv_AP=0.3494) -> khoa lai
+[tune X3_svm_linear] {'C': 0.0003} -> cv_AP=0.4057 (3.9s)
+[tune X3_svm_linear] {'C': 0.001} -> cv_AP=0.4061 (4.3s)
+[tune X3_svm_linear] {'C': 0.003} -> cv_AP=0.4062 (4.3s)
+[tune X3_svm_linear] {'C': 0.01} -> cv_AP=0.4062 (4.2s)
+[tune X3_svm_linear] {'C': 0.03} -> cv_AP=0.4062 (4.4s)
+[tune X3_svm_linear] {'C': 0.1} -> cv_AP=0.4062 (4.3s)
+[tune X3_svm_linear] {'C': 0.3} -> cv_AP=0.4062 (4.3s)
+[tune X3_svm_linear] {'C': 1} -> cv_AP=0.4062 (4.1s)
+[tune X3_svm_linear] {'C': 3} -> cv_AP=0.4062 (4.4s)
+[tune X3_svm_linear] {'C': 10} -> cv_AP=0.4062 (4.3s)
+[tune X3_svm_linear] CHON {'C': 10} (cv_AP=0.4062) -> khoa lai
+[tune X4_logistic_SMOTE] {'C': 0.001} -> cv_AP=0.4048 (4.1s)
+[tune X4_logistic_SMOTE] {'C': 0.003} -> cv_AP=0.4044 (4.1s)
+[tune X4_logistic_SMOTE] {'C': 0.01} -> cv_AP=0.4042 (4.2s)
+[tune X4_logistic_SMOTE] {'C': 0.03} -> cv_AP=0.4042 (4.3s)
+[tune X4_logistic_SMOTE] {'C': 0.1} -> cv_AP=0.4042 (4.3s)
+[tune X4_logistic_SMOTE] {'C': 0.3} -> cv_AP=0.4042 (4.1s)
+[tune X4_logistic_SMOTE] {'C': 1} -> cv_AP=0.4042 (4.3s)
+[tune X4_logistic_SMOTE] {'C': 3} -> cv_AP=0.4042 (4.3s)
+[tune X4_logistic_SMOTE] {'C': 10} -> cv_AP=0.4042 (4.2s)
+[tune X4_logistic_SMOTE] {'C': 30} -> cv_AP=0.4042 (4.3s)
+[tune X4_logistic_SMOTE] CHON {'C': 0.001} (cv_AP=0.4048) -> khoa lai
+            model split threshold_rule     AP  auc_roc  f1_class1  f2_class1  recall_1  precision_1  specificity  threshold
+   X1_gaussian_nb   val  thr_val_maxF2 0.3491   0.7895     0.4043     0.5797    0.8155       0.2688       0.6408     0.0298
+    X3_svm_linear   val  thr_val_maxF2 0.4029   0.8208     0.4186     0.6011    0.8474       0.2780       0.6437     0.1040
+X4_logistic_SMOTE   val  thr_val_maxF2 0.4013   0.8194     0.4208     0.5971    0.8286       0.2820       0.6585     0.4208
+Da luu /kaggle/working/out_xie_a/results_C_xie_appendix.csv

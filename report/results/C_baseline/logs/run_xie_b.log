@@ -1,0 +1,29 @@
+[deps] lightgbm=OK | GPU=CPU (fallback)
+[deps] imbalanced-learn=OK
+[split] train/val/test = 177,576/38,052/38,052
+[tune X2_mlp] {'hidden': (32,), 'alpha': 0.0001} -> cv_AP=0.4214 (15.2s)
+[tune X2_mlp] {'hidden': (32,), 'alpha': 0.01} -> cv_AP=0.4216 (15.3s)
+[tune X2_mlp] {'hidden': (64,), 'alpha': 0.0001} -> cv_AP=0.4297 (22.9s)
+[tune X2_mlp] {'hidden': (64,), 'alpha': 0.01} -> cv_AP=0.4292 (21.1s)
+[tune X2_mlp] {'hidden': (128,), 'alpha': 0.0001} -> cv_AP=0.4310 (26.8s)
+[tune X2_mlp] {'hidden': (128,), 'alpha': 0.01} -> cv_AP=0.4312 (26.8s)
+[tune X2_mlp] {'hidden': (64, 32), 'alpha': 0.0001} -> cv_AP=0.4276 (23.6s)
+[tune X2_mlp] {'hidden': (64, 32), 'alpha': 0.01} -> cv_AP=0.4273 (26.9s)
+[tune X2_mlp] {'hidden': (128, 64), 'alpha': 0.0001} -> cv_AP=0.4284 (65.5s)
+[tune X2_mlp] {'hidden': (128, 64), 'alpha': 0.01} -> cv_AP=0.4267 (77.5s)
+[tune X2_mlp] CHON {'hidden': (128,), 'alpha': 0.01} (cv_AP=0.4312) -> khoa lai
+[tune X5_random_forest_SMOTE] {'n_estimators': 200, 'max_depth': 8} -> cv_AP=0.3999 (71.3s)
+[tune X5_random_forest_SMOTE] {'n_estimators': 200, 'max_depth': 12} -> cv_AP=0.4044 (87.2s)
+[tune X5_random_forest_SMOTE] {'n_estimators': 200, 'max_depth': 16} -> cv_AP=0.4056 (99.4s)
+[tune X5_random_forest_SMOTE] {'n_estimators': 200, 'max_depth': 20} -> cv_AP=0.4004 (110.9s)
+[tune X5_random_forest_SMOTE] {'n_estimators': 200, 'max_depth': None} -> cv_AP=0.3634 (122.5s)
+[tune X5_random_forest_SMOTE] {'n_estimators': 300, 'max_depth': 8} -> cv_AP=0.3994 (110.2s)
+[tune X5_random_forest_SMOTE] {'n_estimators': 300, 'max_depth': 12} -> cv_AP=0.4045 (129.1s)
+[tune X5_random_forest_SMOTE] {'n_estimators': 300, 'max_depth': 16} -> cv_AP=0.4058 (148.0s)
+[tune X5_random_forest_SMOTE] {'n_estimators': 300, 'max_depth': 20} -> cv_AP=0.4010 (162.1s)
+[tune X5_random_forest_SMOTE] {'n_estimators': 300, 'max_depth': None} -> cv_AP=0.3646 (183.6s)
+[tune X5_random_forest_SMOTE] CHON {'n_estimators': 300, 'max_depth': 16} (cv_AP=0.4058) -> khoa lai
+                 model split threshold_rule     AP  auc_roc  f1_class1  f2_class1  recall_1  precision_1  specificity  threshold
+                X2_mlp   val  thr_val_maxF2 0.4261   0.8274     0.4226     0.6028    0.8421       0.2821       0.6531     0.1139
+X5_random_forest_SMOTE   val  thr_val_maxF2 0.4042   0.8168     0.4211     0.5955    0.8227       0.2830       0.6625     0.2030
+Da luu /kaggle/working/out_xie_b/results_C_xie_appendix.csv
