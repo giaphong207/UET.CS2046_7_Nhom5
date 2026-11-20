@@ -1,4 +1,4 @@
-model,strategy,params,split,threshold_rule,seed,n_folds,AP,accuracy,balanced_acc,f1_macro,f1_class1,precision_1,recall_1,specificity,mcc,auc_roc,threshold,n_tp,n_fp,n_fn,n_tn
-B0_dummy,none,prior,val,thr_val_maxF1,42,3,0.1471,0.1471,0.5,0.1282,0.2565,0.1471,1.0,0.0,0.0,0.5,0.01,5029,29157,0,0
-B1_logistic,none,{'C': 0.001},val,thr_val_maxF1,42,3,0.4115,0.8006,0.7143,0.6718,0.4662,0.3845,0.592,0.8366,0.3627,0.8165,0.2278,2977,4765,2052,24392
-B2_random_forest,none,"{'n_estimators': 300, 'max_depth': 12}",val,thr_val_maxF1,42,3,0.4351,0.8066,0.719,0.6783,0.4751,0.3955,0.5948,0.8432,0.3737,0.8217,0.2476,2991,4572,2038,24585
+model,strategy,params,split,threshold_rule,seed,n_folds,AP,accuracy,balanced_acc,f1_macro,f1_class1,f2_class1,precision_1,recall_1,specificity,mcc,auc_roc,threshold,n_tp,n_fp,n_fn,n_tn
+B0_dummy,none,prior,val,thr_val_maxF2,42,3,0.1393,0.1393,0.5,0.1223,0.2446,0.4474,0.1393,1.0,0.0,0.0,0.5,0.01,5302,32750,0,0
+B1_logistic,none,{'C': 0.001},val,thr_val_maxF2,42,3,0.4042,0.6734,0.7435,0.5954,0.4177,0.5983,0.2779,0.8406,0.6463,0.3415,0.8207,0.109,4457,11583,845,21167
+B2_random_forest,none,"{'n_estimators': 300, 'max_depth': 12}",val,thr_val_maxF2,42,3,0.4231,0.7043,0.7465,0.6158,0.4314,0.5978,0.2946,0.805,0.688,0.3516,0.8238,0.1387,4268,10219,1034,22531
