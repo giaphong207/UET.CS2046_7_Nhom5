@@ -1,0 +1,3 @@
+model,strategy,params,seed,n_folds,split,threshold_rule,AP,accuracy,balanced_acc,f1_macro,f1_class1,f2_class1,precision_1,recall_1,specificity,mcc,auc_roc,threshold,n_tp,n_fp,n_fn,n_tn
+X2_mlp,none,"{'hidden': (128,), 'alpha': 0.01}",42,3,val,thr_val_maxF2,0.4261,0.6794,0.7476,0.6004,0.4226,0.6028,0.2821,0.8421,0.6531,0.3479,0.8274,0.1139,4465,11362,837,21388
+X5_random_forest_SMOTE,smote,"{'n_estimators': 300, 'max_depth': 16}",42,3,val,thr_val_maxF2,0.4042,0.6848,0.7426,0.6023,0.4211,0.5955,0.283,0.8227,0.6625,0.3423,0.8168,0.203,4362,11054,940,21696

@@ -1,0 +1,4 @@
+model,strategy,params,seed,n_folds,split,threshold_rule,AP,accuracy,balanced_acc,f1_macro,f1_class1,f2_class1,precision_1,recall_1,specificity,mcc,auc_roc,threshold,n_tp,n_fp,n_fn,n_tn
+X1_gaussian_nb,none,{'var_smoothing': np.float64(0.00021544346900318823)},42,3,val,thr_val_maxF2,0.3491,0.6651,0.7282,0.5857,0.4043,0.5797,0.2688,0.8155,0.6408,0.3199,0.7895,0.0298,4324,11765,978,20985
+X3_svm_linear,none,{'C': 10},42,3,val,thr_val_maxF2,0.4029,0.6721,0.7455,0.5951,0.4186,0.6011,0.278,0.8474,0.6437,0.344,0.8208,0.104,4493,11670,809,21080
+X4_logistic_SMOTE,smote,{'C': 0.001},42,3,val,thr_val_maxF2,0.4013,0.6822,0.7435,0.6009,0.4208,0.5971,0.282,0.8286,0.6585,0.343,0.8194,0.4208,4393,11185,909,21565
