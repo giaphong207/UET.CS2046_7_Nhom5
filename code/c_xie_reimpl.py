@@ -27,6 +27,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+from c_run_guard import RunGuard, validate_split, provenance
 
 ap = argparse.ArgumentParser()
 ap.add_argument("--b-code", required=True)
@@ -38,7 +39,14 @@ ap.add_argument("--only", help="chi chay cac ma, vd X1,X3 (mac dinh: tat ca)")
 ap.add_argument("--quick", action="store_true", help="luoi nho, CHI de kiem thu")
 ap.add_argument("--final", action="store_true", help="them TEST - chi khi nhom da khoa; chay 1 LAN")
 ap.add_argument("--out-dir", default="out_xie")
+ap.add_argument("--approved-final", action="store_true", help="Only after documented group approval")
 args = ap.parse_args()
+if args.final and not args.approved_final:
+    ap.error("FINAL blocked: group approval required")
+if not args.synthetic and not args.idx_dir:
+    ap.error("--idx-dir is required for real data")
+if not args.synthetic and args.final and (args.quick or getattr(args, 'skip_tune', False) or args.beta != 2):
+    ap.error("Real FINAL requires full F2 configuration")
 
 sys.path.insert(0, str(Path(args.b_code).resolve()))
 import b2_b3_pipeline as B                                   # noqa: E402
@@ -53,7 +61,7 @@ from sklearn.svm import LinearSVC                            # noqa: E402
 
 SEED, N_FOLDS = B.SEED, B.N_FOLDS
 OUT = Path(args.out_dir)
-OUT.mkdir(parents=True, exist_ok=True)
+
 RULE = f"thr_val_maxF{args.beta:g}"
 if args.quick:
     print("[CANH BAO] --quick: luoi nho, KHONG dung ket qua nay de nop.")
@@ -86,13 +94,19 @@ def make_synthetic(n=30000, seed=SEED):
 
 # ---- du lieu + chia tap: GIONG c_baseline.py ----
 if args.synthetic:
-    df_raw = make_synthetic()
+    path = None
+    df_raw = make_synthetic(n=1500 if args.quick else 30000)
 else:
     path = Path(args.data) if args.data else B.find_csv(B.F_2L)
     if path is None:
         raise SystemExit("Khong tim thay CSV. Add Input dataset hoac dung --data.")
     df_raw = pd.read_csv(path)
 tcol = B.find_target(df_raw)
+if not args.synthetic and (tcol != "Diabetes_binary" or df_raw.shape != (253680, 22)
+        or not all(pd.api.types.is_numeric_dtype(df_raw[c]) for c in df_raw.columns)):
+    raise ValueError("Unexpected real-data schema")
+if set(df_raw[tcol].unique()) != {0, 1} or df_raw.isna().any().any():
+    raise ValueError("Expected binary labels and no missing data")
 d, feats, st = B.prepare(df_raw, tcol, dedup=False, noise="keep")     # nhom chot: du dong, giu nhan
 X_all = B.encode(d, feats).to_numpy()
 y_all = d[tcol].to_numpy()
@@ -101,12 +115,13 @@ if args.synthetic:
     va_i, te_i = train_test_split(tmp_i, test_size=0.50, stratify=y_all[tmp_i], random_state=SEED)
 else:
     idx = Path(args.idx_dir)
-    tr_i, va_i, te_i = (np.load(idx / f"idx_{n}.npy") for n in ("train", "val", "test"))
-n_idx = len(tr_i) + len(va_i) + len(te_i)
-assert n_idx == len(y_all), f"idx co {n_idx:,} dong nhung prepare() cho {len(y_all):,} -> DUNG LAI, hoi B."
-assert len(set(tr_i) | set(va_i) | set(te_i)) == n_idx, "cac tap bi chong lan"
-Xtr, ytr, Xva, yva, Xte, yte = X_all[tr_i], y_all[tr_i], X_all[va_i], y_all[va_i], X_all[te_i], y_all[te_i]
-print(f"[split] train/val/test = {len(ytr):,}/{len(yva):,}/{len(yte):,}")
+    tr_i, va_i, te_i = (np.load(idx / f"idx_{n}.npy", allow_pickle=False) for n in ("train", "val", "test"))
+validate_split((tr_i, va_i, te_i), len(y_all), args.synthetic)
+if not np.isfinite(X_all).all():
+    raise ValueError("Non-finite input")
+Xtr, ytr = X_all[tr_i], y_all[tr_i]
+Xva, yva = X_all[va_i], y_all[va_i]
+print(f"[split] train/val/test sizes = {len(tr_i):,}/{len(va_i):,}/{len(te_i):,}")
 
 
 # ---- mo hinh ----
@@ -116,7 +131,7 @@ def mk_gnb(p):
 
 def mk_mlp(p):
     return Pipeline([("scaler", StandardScaler()),
-                     ("clf", MLPClassifier(hidden_layer_sizes=p["hidden"], alpha=p["alpha"],
+                     ("clf", MLPClassifier(hidden_layer_sizes=tuple(p["hidden"]), alpha=p["alpha"],
                                            early_stopping=True, max_iter=60 if args.quick else 200,
                                            random_state=SEED))])
 
@@ -133,7 +148,7 @@ def mk_logit(p):
 
 def mk_rf(p):
     return B.build_model("random_forest", "none").set_params(n_estimators=p["n_estimators"],
-                                                              max_depth=p["max_depth"])
+                                                              max_depth=p["max_depth"], n_jobs=1)
 
 
 G_GNB = [{"var_smoothing": v} for v in np.logspace(-9, -1, 10)]
@@ -181,20 +196,37 @@ def tune(name, make, grid, strat):
     return grid[i]
 
 
-rows = []
+if len(set(chosen)) != len(chosen) or not all(c in SPECS for c in chosen):
+    raise ValueError("Invalid or repeated --only model code")
+if any(SPECS[c][3] == "smote" for c in chosen) and not B.IML_OK:
+    raise ValueError("imbalanced-learn required for SMOTE; no silent fallback")
+meta = provenance(args, B, __file__, path, feats, (tr_i, va_i, te_i),
+                  dict(beta=args.beta, quick=args.quick, chosen=chosen))
+guard = RunGuard(args, meta, [SPECS[c][0] for c in chosen])
+OUT = guard.out
+rows, fitted = [], []
 for code in chosen:
     name, make, grid, strat = SPECS[code]
-    best = tune(name, make, grid, strat)
+    best = guard.params(name, lambda: tune(name, make, grid, strat))
     Xr, yr = B.resample(Xtr, ytr, strat, SEED)
     m = make(best).fit(Xr, yr)
     p_va = m.predict_proba(Xva)[:, 1]
-    thr = best_fbeta_threshold(yva, p_va, args.beta)
-    base = {"model": name, "strategy": strat, "params": str(best), "seed": SEED, "n_folds": N_FOLDS}
-    rows.append({**base, "split": "val", "threshold_rule": RULE, **metrics(yva, p_va, thr)})
-    if args.final:
-        p_te = m.predict_proba(Xte)[:, 1]
-        for rule, t in (("thr_0.5", 0.5), (RULE, thr)):
-            rows.append({**base, "split": "test", "threshold_rule": rule, **metrics(yte, p_te, t)})
+    thr = guard.register(name, best, p_va, lambda: best_fbeta_threshold(yva, p_va, args.beta))
+    base = {"model":name,"strategy":strat,"params":str(best),"seed":SEED,"n_folds":N_FOLDS}
+    for rule,t in (("thr_0.5",0.5),(RULE,thr)):
+        rows.append({**base,"split":"val","threshold_rule":rule,**metrics(yva,p_va,t)})
+    fitted.append((name,m,thr,base))
+if args.final:
+    guard.begin_test()
+    Xte,yte = X_all[te_i], y_all[te_i]
+    preds = {}
+    for name,m,thr,base in fitted:
+        p_te = m.predict_proba(Xte)[:,1]
+        preds[name] = p_te
+        for rule,t in (("thr_0.5",0.5),(RULE,thr)):
+            rows.append({**base,"split":"test","threshold_rule":rule,**metrics(yte,p_te,t)})
+else:
+    guard.finish_dev(va_i,yva)
 
 res = pd.DataFrame(rows)
 res.to_csv(OUT / "results_C_xie_appendix.csv", index=False)
@@ -202,3 +234,6 @@ show = ["model", "split", "threshold_rule", "AP", "auc_roc", "f1_class1", "f2_cl
         "precision_1", "specificity", "threshold"]
 print(res[show].to_string(index=False))
 print(f"Da luu {OUT / 'results_C_xie_appendix.csv'}")
+
+if args.final:
+    guard.finish_test("test_predictions_C_xie.npz", te_i, yte, preds)

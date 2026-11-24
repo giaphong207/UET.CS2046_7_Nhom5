@@ -20,7 +20,7 @@ Khac ban v2 (theo ket luan hop nhom):
 
 Cach chay (Kaggle, sau khi upload repo):
     python c_baseline.py --b-code <repo>/code --idx-dir <repo>/report/results/B2_B3
-    python c_baseline.py ... --final       # them TEST: CHI chay MOT LAN sau khi nhom chot
+    FINAL requires a matching DEV lock and explicit group approval; see S4 README.
 Kiem thu nhanh khong can du lieu that:
     python c_baseline.py --b-code <repo>/code --synthetic --quick
 """
@@ -32,6 +32,7 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+from c_run_guard import RunGuard, validate_split, provenance
 
 ap = argparse.ArgumentParser()
 ap.add_argument("--b-code", required=True, help="thu muc code/ cua B (chua b2_b3_pipeline.py)")
@@ -52,8 +53,17 @@ ap.add_argument("--skip-tune", action="store_true",
                 help="bo qua tune, dung tham so mac dinh (CHI de kiem thu)")
 ap.add_argument("--final", action="store_true", help="chay them tren TEST (mot lan)")
 ap.add_argument("--out-dir", default=".", help="thu muc luu file ket qua")
+ap.add_argument("--approved-final", action="store_true", help="Only after documented group approval")
 args = ap.parse_args()
+if args.final and not args.approved_final:
+    ap.error("FINAL blocked: group approval required")
+if not args.synthetic and not args.idx_dir:
+    ap.error("--idx-dir is required for real data")
+if not args.synthetic and args.final and (args.quick or getattr(args, 'skip_tune', False) or args.beta != 2):
+    ap.error("Real FINAL requires full F2 configuration")
 
+if args.dedup != "off" or args.noise != "keep":
+    ap.error("This candidate supports only full data: dedup off, noise keep")
 sys.path.insert(0, str(Path(args.b_code).resolve()))
 import b2_b3_pipeline as B                      # noqa: E402  (import se in vai dong kiem tra thu vien)
 from sklearn.metrics import average_precision_score, fbeta_score   # noqa: E402
@@ -63,7 +73,7 @@ SEED = B.SEED
 N_FOLDS = B.N_FOLDS                              # nhom chot 3 (de cuong 4.3)
 STRATEGY = "none"
 OUT = Path(args.out_dir)
-OUT.mkdir(parents=True, exist_ok=True)
+
 
 # ---- Luoi tham so (10 cau hinh moi ho, trong khoang 10-15 cua de cuong 4.3) ----
 LOGIT_GRID = [{"C": c} for c in (0.001, 0.003, 0.01, 0.03, 0.1, 0.3, 1, 3, 10, 30)]
@@ -109,7 +119,8 @@ def make_synthetic(n=30000, seed=SEED):
 
 # ---- 1. Du lieu + tien xu ly dung nhu B -----------------------------------
 if args.synthetic:
-    df_raw = make_synthetic()
+    path = None
+    df_raw = make_synthetic(n=1500 if args.quick else 30000)
 else:
     path = Path(args.data) if args.data else B.find_csv(B.F_2L)
     if path is None:
@@ -117,6 +128,11 @@ else:
     df_raw = pd.read_csv(path)
 
 tcol = B.find_target(df_raw)
+if not args.synthetic and (tcol != "Diabetes_binary" or df_raw.shape != (253680, 22)
+        or not all(pd.api.types.is_numeric_dtype(df_raw[c]) for c in df_raw.columns)):
+    raise ValueError("Unexpected real-data schema")
+if set(df_raw[tcol].unique()) != {0, 1} or df_raw.isna().any().any():
+    raise ValueError("Expected binary labels and no missing data")
 d, feats, st = B.prepare(df_raw, tcol, dedup=(args.dedup == "on"), noise=args.noise)
 X_all = B.encode(d, feats).to_numpy()
 y_all = d[tcol].to_numpy()
@@ -131,19 +147,14 @@ if args.synthetic:
                                   random_state=SEED)
 else:
     idx = Path(args.idx_dir)
-    tr_i, va_i, te_i = (np.load(idx / f"idx_{n}.npy") for n in ("train", "val", "test"))
+    tr_i, va_i, te_i = (np.load(idx / f"idx_{n}.npy", allow_pickle=False) for n in ("train", "val", "test"))
 
-n_idx = len(tr_i) + len(va_i) + len(te_i)
-assert n_idx == len(y_all), (
-    f"idx cua B co {n_idx:,} dong nhung prepare() cho {len(y_all):,} dong -> "
-    "du lieu hoac tien xu ly khac B, DUNG LAI va hoi B.")
-assert len(set(tr_i) | set(va_i) | set(te_i)) == n_idx, "cac tap chia bi chong lan"
-
+validate_split((tr_i, va_i, te_i), len(y_all), args.synthetic)
+if not np.isfinite(X_all).all():
+    raise ValueError("Non-finite input")
 Xtr, ytr = X_all[tr_i], y_all[tr_i]
 Xva, yva = X_all[va_i], y_all[va_i]
-Xte, yte = X_all[te_i], y_all[te_i]
-print(f"[split] train/val/test = {len(ytr):,}/{len(yva):,}/{len(yte):,}; "
-      f"ty le duong = {ytr.mean():.4f}/{yva.mean():.4f}/{yte.mean():.4f}")
+print(f"[split] train/val/test sizes = {len(tr_i):,}/{len(va_i):,}/{len(te_i):,}")
 
 
 # ---- 3. Tim sieu tham so (CHI tren TRAIN; khong dung val/test) -------------
@@ -155,7 +166,7 @@ def make_logistic(p):
 
 def make_rf(p):
     m = B.build_model("random_forest", STRATEGY)
-    m.set_params(n_estimators=p["n_estimators"], max_depth=p["max_depth"])
+    m.set_params(n_estimators=p["n_estimators"], max_depth=p["max_depth"], n_jobs=1)
     return m
 
 
@@ -188,39 +199,42 @@ def tune(name, make, grid):
     return best_p
 
 
-if args.skip_tune:
-    best_logit, best_rf = {"C": 1.0}, {"n_estimators": 300, "max_depth": None}
-    print("[CANH BAO] --skip-tune: dung tham so mac dinh, KHONG dung cho ket qua nop.")
-else:
-    best_logit = tune("logistic", make_logistic, LOGIT_GRID)
-    best_rf = tune("random_forest", make_rf, RF_GRID)
-
-# ---- 4. Mo hinh baseline (strategy = none) ---------------------------------
-models = {
-    "B0_dummy": (B.build_model("dummy", STRATEGY), "prior"),
-    "B1_logistic": (make_logistic(best_logit), str(best_logit)),
-    "B2_random_forest": (make_rf(best_rf), str(best_rf)),
-}
-
+names = ["B0_dummy", "B1_logistic", "B2_random_forest"]
 if args.appendix_dt:
-    best_dt = {"max_depth": 8, "min_samples_leaf": 50} if args.skip_tune else tune("decision_tree", make_dt, DT_GRID)
-    models["APPX_decision_tree"] = (make_dt(best_dt), str(best_dt))
-
+    names.append("APPX_decision_tree")
+meta = provenance(args, B, __file__, path, feats, (tr_i, va_i, te_i),
+                  dict(beta=args.beta, quick=args.quick, skip_tune=args.skip_tune, appendix_dt=args.appendix_dt))
+guard = RunGuard(args, meta, names)
+OUT = guard.out
+specs = {
+    "B0_dummy": (lambda p: B.build_model("dummy", STRATEGY), lambda: {"strategy":"prior"}),
+    "B1_logistic": (make_logistic, lambda: {"C":1.0} if args.skip_tune else tune("logistic", make_logistic, LOGIT_GRID)),
+    "B2_random_forest": (make_rf, lambda: {"n_estimators":300,"max_depth":None} if args.skip_tune else tune("random_forest", make_rf, RF_GRID)),
+    "APPX_decision_tree": (make_dt, lambda: {"max_depth":8,"min_samples_leaf":50} if args.skip_tune else tune("decision_tree", make_dt, DT_GRID)),
+}
 RULE = f"thr_val_maxF{args.beta:g}"
-rows = []
-for name, (m, params) in models.items():
-    m.fit(Xtr, ytr)
+rows, fitted = [], []
+for name in names:
+    make, select = specs[name]
+    params = guard.params(name, select)
+    m = make(params).fit(Xtr, ytr)
     p_va = m.predict_proba(Xva)[:, 1]
-    thr = best_fbeta_threshold(yva, p_va, args.beta)   # chon nguong CHI tren validation
-    r = metrics(yva, p_va, thr)
-    rows.append({"model": name, "strategy": STRATEGY, "params": params, "split": "val",
-                 "threshold_rule": RULE, "seed": SEED, "n_folds": N_FOLDS, **r})
-    if args.final:
-        p_te = m.predict_proba(Xte)[:, 1]
-        for rule, t in (("thr_0.5", 0.5), (RULE, thr)):
-            r = metrics(yte, p_te, t)
-            rows.append({"model": name, "strategy": STRATEGY, "params": params, "split": "test",
-                         "threshold_rule": rule, "seed": SEED, "n_folds": N_FOLDS, **r})
+    thr = guard.register(name, params, p_va, lambda: best_fbeta_threshold(yva, p_va, args.beta))
+    base = {"model":name,"strategy":STRATEGY,"params":str(params),"seed":SEED,"n_folds":N_FOLDS}
+    for rule,t in (("thr_0.5",0.5),(RULE,thr)):
+        rows.append({**base,"split":"val","threshold_rule":rule,**metrics(yva,p_va,t)})
+    fitted.append((name,m,thr,base))
+if args.final:
+    guard.begin_test()
+    Xte, yte = X_all[te_i], y_all[te_i]
+    preds = {}
+    for name,m,thr,base in fitted:
+        p_te = m.predict_proba(Xte)[:,1]
+        preds[name] = p_te
+        for rule,t in (("thr_0.5",0.5),(RULE,thr)):
+            rows.append({**base,"split":"test","threshold_rule":rule,**metrics(yte,p_te,t)})
+else:
+    guard.finish_dev(va_i,yva)
 
 res = pd.DataFrame(rows)
 if args.appendix_dt:   # tach rieng: phu luc khong lan vao bang baseline chinh
@@ -232,3 +246,6 @@ show = ["model", "split", "threshold_rule", "AP", "auc_roc", "f1_macro", "f1_cla
         "mcc", "recall_1", "precision_1", "specificity", "threshold"]
 print((res_all if args.appendix_dt else res)[show].to_string(index=False))
 print(f"Da luu {OUT / 'results_C_baseline_none.csv'}")
+
+if args.final:
+    guard.finish_test("test_predictions_C_baseline.npz", te_i, yte, preds)
