@@ -1,0 +1,45 @@
+{
+  "task": "S4 - C scripts compatibility and reproducibility",
+  "author": "C - Phong",
+  "timestamp_utc": "2026-11-24T08:35:58.695320+00:00",
+  "pipeline": "B v15",
+  "environment": "Kaggle",
+  "synthetic": true,
+  "quick": true,
+  "real_test_executed_in_S4": false,
+  "seed": 42,
+  "cv_folds": 3,
+  "beta": 2,
+  "dataset_size": 1500,
+  "split_sizes": [
+    1050,
+    225,
+    225
+  ],
+  "checks": {
+    "pipeline_compatibility": "PASS",
+    "dependencies": "PASS",
+    "indices_alignment": "PASS",
+    "baseline_smoke": "PASS",
+    "xie_smoke": "PASS",
+    "locked_config": "PASS",
+    "validation_npz": "PASS",
+    "validation_AP_recalculation": "PASS",
+    "approval_guard": "PASS",
+    "changed_beta_guard": "PASS",
+    "synthetic_final": "PASS",
+    "sha256_integrity": "PASS",
+    "test_AP_recalculation": "PASS",
+    "baseline_xie_alignment": "PASS",
+    "validation_test_overlap": "PASS",
+    "repeat_final_guard": "PASS",
+    "original_results_preserved": "PASS"
+  },
+  "limitations": [
+    "Synthetic data only",
+    "Quick tuning grids only",
+    "Not official experimental results",
+    "Real FINAL requires group approval",
+    "SMOTE methodological issue remains open"
+  ]
+}
