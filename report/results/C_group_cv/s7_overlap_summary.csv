@@ -1,0 +1,3 @@
+method,n_eval_total,shared_eval_rows_total,shared_groups_mean,index_overlap_total,shared_eval_rate
+GroupKFold,177576,0,0.0,0,0.0
+StratifiedKFold,177576,19078,4292.666666666667,0,0.10743568950759112
