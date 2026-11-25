@@ -8,19 +8,23 @@ import numpy as np
 import pandas as pd
 from sklearn.dummy import DummyClassifier
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.feature_selection import SelectKBest, f_classif
+from sklearn.feature_selection import SelectFromModel
+from sklearn.metrics import average_precision_score
 from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import ParameterGrid, train_test_split
+from sklearn.model_selection import ParameterGrid, StratifiedKFold, train_test_split
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
 from .core import (
-    FEATURE_COUNTS, FINAL_MODEL_TIE_RULE, SEED, SPLIT_NAMES, load_dataset,
-    metrics_at_threshold, select_final_model, sha256_file, stratified_indices,
+    F2_GRID, FEATURE_COUNTS, FINAL_MODEL_TIE_RULE, SEED, SPLIT_NAMES,
+    feature_selection_policy, f2_threshold_curve, load_dataset, select_feature_budget, threshold_policy,
+    metrics_at_threshold, sha256_file, stratified_indices,
     validate_split_indices,
 )
-from .modeling import FoldAwareXGB, model_configuration, random_spaces
+from .modeling import (ExactTopKSelectFromModel, FoldAwareXGB, XGBClassifier,
+                       model_configuration, primary_ranking_record, random_spaces)
 from .provenance import MANIFEST_VERSION, read_json, verify_a4_provenance
+from .shared_splits import LEGACY_QA_MODE, SHARED_MODE, array_sha256, verify_shared_split
 
 PROBABILITY_ATOL = 1e-8
 PROBABILITY_RTOL = 1e-7
@@ -70,7 +74,16 @@ def _selection(a4, manifest, features):
         raise ValueError('Selection run/candidate-order/tie-rule metadata differs from A4')
     if selection.get('input_feature_names') != features:
         raise ValueError('Selection input feature ordering differs from A4')
-    if select_final_model(candidates, selection.get('ap_validation_candidates', {})) != selection.get('final_model'):
+    ap_candidates=selection.get('ap_validation_candidates', {})
+    locked_id=selection.get('final_model')
+    if (not isinstance(ap_candidates,dict) or set(ap_candidates)!=set(candidates)
+            or locked_id not in candidates
+            or any(not isinstance(v,(int,float)) or not np.isfinite(v) or not 0<=v<=1
+                   for v in ap_candidates.values())):
+        raise ValueError('Invalid locked validation model decision')
+    locked_ap=ap_candidates[locked_id]
+    if (any(value>locked_ap for value in ap_candidates.values())
+            or any(ap_candidates[key]==locked_ap for key in candidates[:candidates.index(locked_id)])):
         raise ValueError('Final model ID differs from locked validation selection')
     validation = pd.read_csv(a4 / 'validation_metrics.csv', float_precision='round_trip')
     if list(validation.get('model', [])) != CORE_MODEL_IDS or not (validation['split'] == 'validation').all():
@@ -78,31 +91,104 @@ def _selection(a4, manifest, features):
     saved_ap = dict(zip(validation.model, validation.average_precision))
     feature_ap = {f'A3_k{value}': saved_ap[f'A3_k{value}'] for value in FEATURE_COUNTS}
     reference = saved_ap['A2']
-    eligible = [value for value in sorted(FEATURE_COUNTS)
-                if reference - feature_ap[f'A3_k{value}'] <= 0.01 + 1e-12]
+    expected_k,eligible=select_feature_budget(reference,{value:feature_ap[f'A3_k{value}'] for value in FEATURE_COUNTS})
     if (selection.get('reduction_tolerance_ap') != 0.01
             or selection.get('weighted_reference_ap') != reference
             or selection.get('ap_validation_feature_counts') != feature_ap
             or selection.get('eligible_feature_counts') != eligible
-            or k != (min(eligible) if eligible else 21)
+            or k != expected_k
+            or selection.get('selected_reduction_model') != (f'A3_k{k}' if eligible else 'A2')
+            or selection.get('separately_reported_a3_model') != f'A3_k{k}'
+            or selection.get('full_feature_fallback') != 'A2'
             or selection['ap_validation_candidates'] != {key: saved_ap[key] for key in candidates}):
         raise ValueError('Feature-count/final selection differs from saved validation metrics')
     threshold = _threshold(selection.get('final_threshold'), 'Final threshold')
-    f1_thresholds = selection.get('validation_f1_thresholds', {})
-    if set(f1_thresholds) != set(CORE_MODEL_IDS):
+    if (selection.get('threshold_policy') != threshold_policy()
+            or selection.get('feature_selection') != feature_selection_policy()
+            or selection.get('primary_feature_selection_status') != 'IMPLEMENTED'
+            or selection.get('feature_selection_cv_performed') is not True):
+        raise ValueError('Selection threshold/feature methodology differs from the recorded QA protocol')
+    f2_thresholds = selection.get('validation_f2_thresholds', {})
+    if set(f2_thresholds) != set(CORE_MODEL_IDS):
         raise ValueError('Validation threshold model IDs are inconsistent')
-    f1_thresholds = {key: _threshold(value, f'{key} threshold') for key, value in f1_thresholds.items()}
-    if threshold != f1_thresholds[selection['final_model']]:
+    f2_thresholds = {key: _threshold(value, f'{key} threshold') for key, value in f2_thresholds.items()}
+    if threshold != f2_thresholds[selection['final_model']]:
         raise ValueError('Final threshold differs from locked validation threshold')
+    trace = read_json(a4 / 'threshold_search.json')
+    if (trace.get('run_id') != manifest['run_id'] or trace.get('policy') != threshold_policy()
+            or set(trace.get('models', {})) != set(CORE_MODEL_IDS)):
+        raise ValueError('F2 threshold-search provenance differs from A4')
+    # Verify the already-locked validation curve; A5 never invokes threshold selection.
+    for key, saved in trace['models'].items():
+        values = np.asarray(saved.get('f2_values'), dtype=float)
+        winner = saved.get('winner_grid_index')
+        if (values.shape != F2_GRID.shape or not np.isfinite(values).all()
+                or (values < 0).any() or (values > 1).any()
+                or isinstance(winner, bool) or not isinstance(winner, int)
+                or not 0 <= winner < len(F2_GRID)):
+            raise ValueError('Invalid F2 validation threshold curve')
+        maximum = float(values.max())
+        if (values[winner] != maximum or (values[:winner] == maximum).any()
+                or saved.get('max_f2') != maximum
+                or saved.get('selected_threshold') != float(F2_GRID[winner])
+                or f2_thresholds[key] != float(F2_GRID[winner])):
+            raise ValueError('F2 grid/smallest exact-tie decision differs from locked validation threshold')
+    reference = pd.read_csv(a4 / 'validation_reference_metrics.csv', float_precision='round_trip')
+    if (list(reference.get('model', [])) != CORE_MODEL_IDS
+            or not (reference['split'] == 'validation').all() or not (reference.threshold == 0.5).all()
+            or not np.allclose(reference.average_precision,validation.average_precision,atol=1e-12,rtol=0)):
+        raise ValueError('Validation 0.5 reference/AP invariance differs from A4')
     test_ids = ['B0', 'B1', 'B2', 'B3', 'A1', 'A2', f'A3_k{k}']
     test_thresholds = {
-        key: f1_thresholds[key] if key in ('A2', f'A3_k{k}') else 0.5 for key in test_ids}
+        key: f2_thresholds[key] if key in ('A2', f'A3_k{k}') else 0.5 for key in test_ids}
     if selection.get('test_thresholds') != test_thresholds:
         raise ValueError('Test decision thresholds differ from locked selection')
     return selection, threshold, test_ids
 
 
-def _registry(a4, manifest, selection, features, ytrain):
+def _verify_primary_pipeline(pipeline, k, features, source_ids, ytrain, b3_params):
+    steps=pipeline.named_steps
+    selector=steps.get('selection')
+    if (list(steps) != ['selection','model'] or not isinstance(selector,SelectFromModel)
+            or not isinstance(selector,ExactTopKSelectFromModel) or selector.k != k
+            or selector.max_features != k or selector.prefit or selector.threshold != -np.inf
+            or selector.importance_getter != 'feature_importances_' or selector.norm_order != 1
+            or getattr(selector,'_sklearn_output_config',{}).get('transform') != 'pandas'):
+        raise ValueError('Primary selector differs from exact top-k SelectFromModel settings')
+    expected={**b3_params,'weight_mode':'balanced','importance_type':'gain'}
+    if (list(selector.feature_names_in_) != features
+            or not isinstance(selector.estimator,FoldAwareXGB) or selector.estimator.get_params() != expected):
+        raise ValueError('Primary ranking settings/input columns differ from selected B3 gain configuration')
+    ranker=selector.estimator_
+    downstream=steps['model']
+    ratio=float((np.asarray(ytrain)==0).sum()/(np.asarray(ytrain)==1).sum())
+    for role,estimator in [('ranker',ranker),('downstream',downstream)]:
+        if (not isinstance(estimator,FoldAwareXGB) or estimator.get_params() != expected
+                or not isinstance(getattr(estimator,'core_',None),XGBClassifier)):
+            raise ValueError(f'Primary {role} ranking settings differ from selected B3')
+        actual=estimator.core_.get_params()
+        if (any(actual.get(key) != value for key,value in expected.items() if key != 'weight_mode')
+                or actual.get('tree_method') != 'hist' or actual.get('eval_metric') != 'logloss'
+                or actual.get('scale_pos_weight') != ratio or estimator.weight_ratio_ != ratio):
+            raise ValueError(f'Primary {role} gain/class weighting differs from allowed fit labels')
+        if (not np.array_equal(getattr(estimator,'fit_source_row_indices_',None),source_ids)
+                or getattr(estimator,'n_fit_samples_',None) != len(source_ids)
+                or getattr(estimator,'fit_label_sha256_',None) != array_sha256(np.asarray(ytrain,dtype=int))):
+            raise ValueError(f'Primary {role} fit identities differ from the allowed training fold')
+    if not np.array_equal(selector.fit_source_row_indices_,source_ids):
+        raise ValueError('Primary selector fit identities differ from the allowed training fold')
+    if list(ranker.feature_names_in_) != features or ranker.n_features_in_ != len(features):
+        raise ValueError('Primary ranker fitted column order differs from original features')
+    selected=list(np.asarray(features)[selector.get_support()])
+    if (len(selected) != k or downstream.n_features_in_ != k
+            or list(downstream.feature_names_in_) != selected
+            or ranker.core_.get_booster().feature_names != features
+            or downstream.core_.get_booster().feature_names != selected):
+        raise ValueError('Primary selected columns/actual feature count differ from fitted models')
+    return selected
+
+
+def _registry(a4, manifest, selection, features, ytrain, train_ids):
     # Checksum verification has already run. Only load artifacts from trusted creators.
     fit = joblib.load(a4 / 'fitted_models.joblib')
     if not isinstance(fit, dict) or fit.get('schema_version') != MANIFEST_VERSION:
@@ -160,6 +246,14 @@ def _registry(a4, manifest, selection, features, ytrain):
         else:
             if not isinstance(estimator, FoldAwareXGB):
                 raise ValueError(f'{key} must contain the fitted XGBoost wrapper')
+            if not isinstance(getattr(estimator, 'core_', None), XGBClassifier):
+                raise ValueError(f'{key} must actually contain XGBClassifier; no LightGBM or RF fallback')
+            core_params = estimator.core_.get_params()
+            if (core_params.get('tree_method') != 'hist' or core_params.get('eval_metric') != 'logloss'
+                    or core_params.get('scale_pos_weight') != estimator.weight_ratio_
+                    or any(core_params.get(field) != value for field,value in estimator.get_params().items()
+                           if field != 'weight_mode')):
+                raise ValueError(f'{key} actual XGBoost parameters differ from its wrapper')
             params = estimator.get_params()
             if key == 'B3':
                 if params['weight_mode'] != 'none' or estimator.weight_ratio_ != 1.0:
@@ -170,14 +264,7 @@ def _registry(a4, manifest, selection, features, ytrain):
                     raise ValueError(f'{key} weighting/hyperparameters differ from the controlled B3 ablation')
         if key.startswith('A3_k'):
             k = int(key.removeprefix('A3_k'))
-            selector = steps.get('selection')
-            if (list(steps) != ['selection', 'model'] or not isinstance(selector, SelectKBest)
-                    or selector.k != k or selector.score_func is not f_classif):
-                raise ValueError(f'{key} selector differs from the recorded ANOVA filter')
-            selected = list(np.asarray(features)[selector.get_support()])
-            if len(selected) != k:
-                raise ValueError(f'{key} selected feature count is invalid')
-            actual_features[key] = selected
+            actual_features[key]=_verify_primary_pipeline(model,k,features,train_ids,ytrain,b3_params)
         else:
             if key != 'B1' and list(steps) != ['model']:
                 raise ValueError(f'{key} pipeline steps differ from A4')
@@ -191,6 +278,82 @@ def _registry(a4, manifest, selection, features, ytrain):
             or selection.get('final_feature_count') != len(final_features)):
         raise ValueError('Final selected feature metadata differs from the actual model')
     return fit
+
+
+def _verify_primary_evidence(a4, manifest, fit, Xtrain, ytrain, Xvalidation, yvalidation, train_ids, validation_ids, expected_folds):
+    """Check serialized fold fits and recompute training-CV diagnostics without fitting."""
+    folds=read_json(a4/'feature_selection_folds.json')
+    context=dict(run_id=manifest['run_id'],source_files_sha256=manifest['source_files_sha256'],
+                 dataset_sha256=manifest['dataset_sha256'],split_archive_sha256=manifest['split_archive_sha256'],
+                 cv_fold_archive_sha256=sha256_file(a4/'cv_fold_indices.npz'),policy=feature_selection_policy())
+    fold_registry=joblib.load(a4/'feature_selection_models.joblib')
+    if (not isinstance(fold_registry,dict) or any(folds.get(key) != value or fold_registry.get(key) != value
+                                               for key,value in context.items())):
+        raise ValueError('Primary selector fold/source identities differ from A4')
+    n_folds=manifest['cv_folds']
+    expected=[(k,fold) for k in FEATURE_COUNTS for fold in range(n_folds)]
+    records=folds.get('records',[])
+    models=fold_registry.get('models',{})
+    if ([(r.get('requested_k'),r.get('fold')) for r in records] != expected
+            or list(models) != [f'A3_k{k}_fold_{fold}' for k,fold in expected]
+            or folds.get('successful_folds_per_k') != {str(k):n_folds for k in FEATURE_COUNTS}
+            or manifest.get('primary_selector_cv_fits') != len(expected)
+            or manifest.get('primary_selector_refit_fits') != len(FEATURE_COUNTS)):
+        raise ValueError('Primary selector fold coverage/feature counts differ from A4')
+    table=pd.read_csv(a4/'feature_selection_cv.csv',float_precision='round_trip')
+    expected_rows=[]
+    positions={int(source_id):pos for pos,source_id in enumerate(train_ids)}
+    b3_params=fit['models']['B3'].named_steps['model'].get_params()
+    for record,(k,fold) in zip(records,expected):
+        tr=expected_folds[f'fold_{fold}_train']; va=expected_folds[f'fold_{fold}_validation']
+        model=models[f'A3_k{k}_fold_{fold}']
+        tr_pos=[positions[int(i)] for i in tr]; va_pos=[positions[int(i)] for i in va]
+        _verify_primary_pipeline(model,k,list(Xtrain.columns),tr,ytrain.iloc[tr_pos],b3_params)
+        ranking=primary_ranking_record(model)
+        ap=float(average_precision_score(ytrain.iloc[va_pos],model.predict_proba(Xtrain.iloc[va_pos])[:,1]))
+        if (any(record.get(key) != value for key,value in ranking.items())
+                or record.get('model') != f'A3_k{k}' or record.get('scope') != 'primary_training_cv'
+                or record.get('train_source_row_indices') != tr.tolist()
+                or record.get('validation_source_row_indices') != va.tolist()
+                or record.get('validation_source_indices_sha256') != array_sha256(va)
+                or record.get('ap') != ap):
+            raise ValueError('Primary selector fold rankings/selected columns/AP/fit identities differ from fitted model')
+        expected_rows.append(dict(model=f'A3_k{k}',fold=fold,requested_k=k,actual_feature_count=k,
+                                  average_precision=ap,train_rows=len(tr),validation_rows=len(va),
+                                  ranker_weight_ratio=ranking['ranker_weight_ratio'],
+                                  downstream_weight_ratio=ranking['downstream_weight_ratio']))
+    if table.to_dict(orient='records') != expected_rows:
+        raise ValueError('Primary selector CV AP/feature counts differ from verified fold records')
+    rankings=read_json(a4/'feature_rankings.json')
+    expected_rankings={f'A3_k{k}':dict(scope='full_primary_training_refit',**primary_ranking_record(fit['models'][f'A3_k{k}']))
+                       for k in FEATURE_COUNTS}
+    if (rankings.get('run_id') != manifest['run_id']
+            or rankings.get('source_files_sha256') != manifest['source_files_sha256']
+            or rankings.get('policy') != feature_selection_policy() or rankings.get('models') != expected_rankings):
+        raise ValueError('Primary full-training rankings/selected columns differ from fitted selectors')
+    reference=read_json(a4/'a2_reference_lock.json')
+    a2_ap=float(average_precision_score(yvalidation,fit['models']['A2'].predict_proba(Xvalidation)[:,1]))
+    if reference != dict(run_id=manifest['run_id'],source_files_sha256=manifest['source_files_sha256'],
+                         model='A2',average_precision=a2_ap,train_source_indices_sha256=array_sha256(train_ids),
+                         validation_source_indices_sha256=array_sha256(validation_ids),locked_before_primary_selector=True):
+        raise ValueError('Locked full-feature A2 reference differs from reserved-validation model scores')
+    validation=pd.read_csv(a4/'validation_metrics.csv',float_precision='round_trip')
+    trace=read_json(a4/'threshold_search.json')
+    for key,model in fit['models'].items():
+        p=model.predict_proba(Xvalidation)[:,1]
+        if (float(validation.loc[validation.model==key,'average_precision'].iloc[0]) != float(average_precision_score(yvalidation,p))
+                or trace['models'][key]['f2_values'] != f2_threshold_curve(yvalidation,p).tolist()):
+            raise ValueError('Reserved-validation AP/F2 evidence differs from fitted A4 models')
+    # Full-budget transform must preserve every original column and A2 scores.
+    if not np.array_equal(fit['models']['A3_k21'].predict_proba(Xvalidation),fit['models']['A2'].predict_proba(Xvalidation)):
+        raise ValueError('Full-feature A3 k=21 does not preserve A2 score parity')
+    secondary=read_json(a4/'secondary_anova.json')
+    if (secondary.get('run_id') != manifest['run_id'] or secondary.get('scope') != 'SECONDARY_QA_ONLY'
+            or secondary.get('method') != 'SelectKBest(f_classif)' or secondary.get('training_cv_performed') is not False
+            or secondary.get('used_for_primary_selection') is not False
+            or set(secondary.get('models',{})) != (set() if manifest['status']=='RESEARCH_TEST_COMPLETE'
+                                                   else {f'ANOVA_k{k}' for k in FEATURE_COUNTS})):
+        raise ValueError('Secondary ANOVA experiment is not separated from the primary selector')
 
 
 def _recompute_predictions(pred, models, selection, test_ids, Xtest):
@@ -239,6 +402,14 @@ def _verify_test_metrics(a4, pred, selection, test_ids):
                 agrees = np.isclose(row[field], value, atol=PROBABILITY_ATOL, rtol=PROBABILITY_RTOL)
             if not agrees:
                 raise ValueError(f'Saved test metrics differ from locked model: {key}/{field}')
+    reference = pd.read_csv(a4 / 'test_reference_metrics.csv', float_precision='round_trip')
+    if list(reference.get('model', [])) != [*test_ids, 'FINAL'] or not (reference['split'] == 'test').all():
+        raise ValueError('Test reference model IDs/split differ from A4')
+    for _, row in reference.iterrows():
+        expected = metrics_at_threshold(pred.y_true, pred[f"prob_{row['model']}"], 0.5)
+        for field,value in expected.items():
+            if field not in row or not np.isclose(row[field],value,atol=PROBABILITY_ATOL,rtol=PROBABILITY_RTOL):
+                raise ValueError('Saved test 0.5 reference metrics differ from the locked model')
 
 
 def _verify_cv_trace(trace, runtime):
@@ -308,9 +479,36 @@ def validate_a4_artifacts(data_path, a4_dir, manifest):
     with np.load(a4 / 'split_indices.npz', allow_pickle=False) as archive:
         splits = validate_split_indices(
             {name: archive[name] for name in archive.files}, len(X), manifest.get('split_counts'))
-    expected_splits = stratified_indices(y, seed=SEED)
+    split_record = read_json(a4 / 'split_manifest.json')
+    if (split_record.get('mode') != effective_split.get('mode')
+            or split_record.get('archive_sha256') != manifest['split_archive_sha256']
+            or split_record.get('normalized_array_sha256') != {
+                key:array_sha256(ix) for key,ix in splits.items()}
+            or effective_split.get('normalized_array_sha256') != split_record['normalized_array_sha256']):
+        raise ValueError('Stored split manifest/archive/source positions differ from A4')
+    if effective_split['mode'] == SHARED_MODE:
+        expected_splits, verified_split = verify_shared_split(
+            data_path, a4 / 'split_indices.npz', a4 / 'shared_split_manifest.json')
+        if (verified_split['input_manifest_sha256'] != manifest.get('shared_split_manifest_sha256')
+                or split_record.get('verified_B_v9_recipe_and_order') is not True):
+            raise ValueError('Canonical split manifest verification differs from A4')
+    elif effective_split['mode'] == LEGACY_QA_MODE and manifest['status'] != 'RESEARCH_TEST_COMPLETE':
+        expected_splits = stratified_indices(y, seed=SEED)
+    else:
+        raise ValueError('Unapproved split mode; canonical archive cannot have a generated fallback')
     if any(not np.array_equal(splits[name], expected_splits[name]) for name in SPLIT_NAMES):
-        raise ValueError('Saved split indices differ from the seeded A4 split')
+        raise ValueError('Saved split indices differ from the exact recorded A4 recipe/order')
+    cv = provenance['runtime']['effective']['cross_validation']
+    train_ids = mapping[splits['train']]
+    expected_folds = {}
+    for fold,(tr,va) in enumerate(StratifiedKFold(n_splits=cv['folds'],shuffle=True,random_state=SEED).split(
+            X.iloc[splits['train']],y.iloc[splits['train']])):
+        expected_folds[f'fold_{fold}_train'] = train_ids[tr]
+        expected_folds[f'fold_{fold}_validation'] = train_ids[va]
+    with np.load(a4 / 'cv_fold_indices.npz', allow_pickle=False) as archive:
+        if (set(archive.files) != set(expected_folds)
+                or any(not np.array_equal(archive[key],value) for key,value in expected_folds.items())):
+            raise ValueError('Saved primary-training CV folds/source positions differ from A4')
     class_counts = {}
     for name, ix in splits.items():
         positive = int(y.iloc[ix].sum())
@@ -330,7 +528,10 @@ def validate_a4_artifacts(data_path, a4_dir, manifest):
         raise ValueError('Test ground truth differs from A4 source labels')
     Xtrain = X.iloc[splits['train']].reset_index(drop=True)
     Xtest = X.iloc[splits['test']].reset_index(drop=True)
-    fit = _registry(a4, manifest, selection, features, y.iloc[splits['train']])
+    fit = _registry(a4, manifest, selection, features, y.iloc[splits['train']], train_ids)
+    _verify_primary_evidence(a4,manifest,fit,Xtrain,y.iloc[splits['train']],
+                             X.iloc[splits['validation']],y.iloc[splits['validation']],
+                             train_ids,mapping[splits['validation']],expected_folds)
     pred, differences = _recompute_predictions(pred, fit['models'], selection, test_ids, Xtest)
     _verify_test_metrics(a4, pred, selection, test_ids)
     return dict(
@@ -341,6 +542,8 @@ def validate_a4_artifacts(data_path, a4_dir, manifest):
         verification=dict(
             run_id=manifest['run_id'], split_indices_verified=True, source_mapping_verified=True,
             registry_metadata_verified=True, selected_features_verified=True,
+            primary_selector_folds_verified=True, primary_rankings_verified=True,
+            primary_feature_selection_status='IMPLEMENTED',
             probability_atol=PROBABILITY_ATOL, probability_rtol=PROBABILITY_RTOL,
             max_absolute_probability_differences=differences,
             analysis_scores='recomputed from serialized fitted models; no refit',

@@ -1,10 +1,9 @@
-"""From research/lead_modeling/a4_a5: python scripts/run_a5.py --data ... --a4-dir ....
+"""A5 V3 entrypoint; imports the single repository-root src package.
 
-From repository root, prefix both script and relative data/output paths with
-research/lead_modeling/a4_a5/.
+Requires a fresh, matching V3 A4 run. It never refits or selects models.
 """
 import sys
 from pathlib import Path
-sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'src'))
+sys.path.insert(0,str(Path(__file__).resolve().parents[4]/'src'))
 from diabetes_research.analysis import main
 if __name__=='__main__':main()

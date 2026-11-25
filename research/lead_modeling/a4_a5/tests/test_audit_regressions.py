@@ -1,10 +1,10 @@
 """Audit regression and synthetic integration checks; never official BRFSS findings."""
 import json
+import hashlib
 import shutil
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'src'))
 import joblib
 import numpy as np
 import pandas as pd
@@ -20,25 +20,31 @@ from diabetes_research.core import (
     sha256_file, split_diagnostics, stratified_indices, validate_split_indices, write_json,
 )
 from diabetes_research.provenance import (
-    A4_CRITICAL_ARTIFACTS, COMPONENT_ROOT, artifact_hashes, read_json, source_identity,
+    A4_CRITICAL_ARTIFACTS, COMPONENT_ROOT, SELECTION_LOCK_ARTIFACTS, artifact_hashes, read_json, source_identity,
     validate_protocol,
 )
+from diabetes_research.paths import PROTOCOL_PATH, REPOSITORY_ROOT
 from test_protocol import toy_data
-
-
-@pytest.fixture(scope='session')
-def clean_a4(tmp_path_factory):
-    root = tmp_path_factory.mktemp('synthetic_a4')
-    data = root / 'synthetic.csv'
-    toy_data().to_csv(data, index=False)
-    output = root / 'a4'
-    manifest = modeling.run(data, output, trials=10, cv_folds=3, demo=True)
-    return data, output, manifest
 
 
 def refresh_hashes(output):
     """Bypass byte guard deliberately to test independent semantic consistency checks."""
     manifest = read_json(output / 'manifest.json')
+    # Rebind declared digest fields too, so overlap/coverage faults reach row validation.
+    split_digest = sha256_file(output / 'split_indices.npz')
+    manifest['split_archive_sha256'] = split_digest
+    runtime = read_json(output / 'runtime_config.json')
+    runtime['effective']['split']['archive_sha256'] = split_digest
+    write_json(output / 'runtime_config.json', runtime)
+    split_record = read_json(output / 'split_manifest.json')
+    split_record['archive_sha256'] = split_digest
+    write_json(output / 'split_manifest.json', split_record)
+    lock = read_json(output / 'selection_lock.json')
+    lock['artifact_hashes'] = artifact_hashes(output, SELECTION_LOCK_ARTIFACTS)
+    body = {key:value for key,value in lock.items() if key != 'lock_id'}
+    lock['lock_id'] = hashlib.sha256(json.dumps(body,sort_keys=True,separators=(',',':')).encode()).hexdigest()
+    write_json(output / 'selection_lock.json', lock)
+    manifest['selection_lock_id'] = lock['lock_id']
     manifest['artifact_hashes'] = artifact_hashes(output, A4_CRITICAL_ARTIFACTS)
     write_json(output / 'manifest.json', manifest)
     return manifest
@@ -53,9 +59,14 @@ def test_clean_a4_a5_roundtrip_preserves_locked_model(clean_a4, tmp_path, monkey
         raise AssertionError('A5 must not refit or select a new threshold')
 
     for cls in (modeling.FoldAwareXGB, modeling.LogisticRegression,
-                modeling.RandomForestClassifier, modeling.SelectKBest, modeling.StandardScaler):
+                modeling.RandomForestClassifier, modeling.SelectKBest, modeling.StandardScaler,
+                modeling.SelectFromModel, modeling.ExactTopKSelectFromModel):
         monkeypatch.setattr(cls, 'fit', forbidden)
-    monkeypatch.setattr(modeling, 'optimal_f1_threshold', forbidden)
+    monkeypatch.setattr(modeling, 'optimal_f2_threshold', forbidden)
+    monkeypatch.setattr(modeling, 'select_final_model', forbidden)
+    from diabetes_research import core
+    monkeypatch.setattr(core, 'select_final_model', forbidden)
+    monkeypatch.setattr(core, 'optimal_f2_threshold', forbidden)
     out = tmp_path / 'a5'
     summary = analysis.run(data, a4, out, allow_smoke=True)
     saved = read_json(out / 'manifest_a5.json')
@@ -64,15 +75,17 @@ def test_clean_a4_a5_roundtrip_preserves_locked_model(clean_a4, tmp_path, monkey
     assert saved['locked_threshold'] == selection['final_threshold']
     assert saved['status'] == 'SYNTHETIC_QA_ONLY'
     assert saved['artifact_hashes'] == artifact_hashes(out)
-    assert summary['n_attempted_bootstrap'] == 1000
-    assert summary['n_valid_bootstrap'] + summary['n_excluded_bootstrap'] == 1000
+    assert set(summary['comparisons']) == {'B2_minus_B1','B3_minus_B1','FINAL_minus_B3'}
+    for comparison in summary['comparisons'].values():
+        assert comparison['n_attempted_bootstrap'] == 1000
+        assert comparison['n_valid_bootstrap'] + comparison['n_excluded_bootstrap'] == 1000
     assert before == artifact_hashes(a4)
     assert list(pd.read_csv(out / 'subgroups_test.csv')) == analysis.SUBGROUP_COLUMNS
     assert read_json(out / 'versions_a5.json')['python']
     verification = read_json(out / 'artifact_verification.json')
     assert verification['registry_metadata_verified'] and verification['test_metrics_verified']
     runtime = read_json(a4 / 'runtime_config.json')
-    assert (a4 / 'config.yaml').read_bytes() == (COMPONENT_ROOT / 'config/A2_protocol_v2.yaml').read_bytes()
+    assert (a4 / 'config.yaml').read_bytes() == PROTOCOL_PATH.read_bytes()
     assert runtime['effective']['search_spaces'] == modeling.random_spaces()
     assert manifest['actual_trials_per_family'] == {'B1': 10, 'B2': 10, 'B3': 10}
     for stage in (manifest, saved):
@@ -379,7 +392,7 @@ def test_source_identity_covers_untracked_code_not_only_git():
     identity = source_identity()
     for name in ('modeling', 'analysis', 'core', 'provenance', 'artifact_validation'):
         key = f'src/diabetes_research/{name}.py'
-        assert identity['file_hashes'][key] == sha256_file(COMPONENT_ROOT / key)
+        assert identity['file_hashes'][key] == sha256_file(REPOSITORY_ROOT / key)
     assert len(identity['source_files_sha256']) == 64
 
 
@@ -388,7 +401,7 @@ def test_source_identity_covers_untracked_code_not_only_git():
     ('uncertainty', 'n_resamples', 200), ('metrics', 'primary', 'accuracy'),
 ])
 def test_protocol_drift_is_not_silently_snapshotted(section, key, value):
-    protocol = yaml.safe_load((COMPONENT_ROOT / 'config/A2_protocol_v2.yaml').read_text())
+    protocol = yaml.safe_load(PROTOCOL_PATH.read_text())
     validate_protocol(protocol)
     protocol[section][key] = value
     with pytest.raises(ValueError, match=section):
@@ -432,3 +445,4 @@ def test_notebook_component_resolution_from_supported_working_directories(name, 
         scope = {}
         exec(compile(resolution, name, 'exec'), scope)
         assert scope['ROOT'] == COMPONENT_ROOT
+        assert scope['REPO'] == REPOSITORY_ROOT

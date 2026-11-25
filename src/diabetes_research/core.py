@@ -8,7 +8,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from sklearn.metrics import (accuracy_score, average_precision_score,
-    confusion_matrix, f1_score, precision_score, recall_score, roc_auc_score)
+    confusion_matrix, f1_score, fbeta_score, precision_score, recall_score, roc_auc_score)
 from sklearn.model_selection import train_test_split
 
 TARGET = 'Diabetes_binary'
@@ -21,6 +21,54 @@ EXPECTED = set(BINARY + ['BMI','MentHlth','PhysHlth','GenHlth','Age','Education'
 SPLIT_NAMES = ('train', 'validation', 'test')
 FEATURE_COUNTS = (21, 15, 10, 5)
 FINAL_MODEL_TIE_RULE = 'highest validation AP; exact ties follow candidate_order'
+F2_GRID = np.linspace(0.01, 0.99, 199)
+SHAP_DEFAULT_N = 500
+SHAP_DEFAULT_BACKGROUND_N = 100
+SHAP_DEFAULT_CHUNK_SIZE = 25
+CORE_BOOTSTRAP_PAIRS = (
+    ('B2_minus_B1', 'B2', 'B1'),
+    ('B3_minus_B1', 'B3', 'B1'),
+    ('FINAL_minus_B3', 'FINAL', 'B3'),
+)
+
+
+def threshold_policy():
+    return dict(reference=0.5, selection='maximize_f2_validation',
+                positive_label=1, beta=2, grid=F2_GRID.tolist(),
+                grid_construction='np.linspace(0.01, 0.99, 199)',
+                grid_order='ascending', tie_rule='smallest_threshold_exact_tie',
+                decision_rule='probability >= threshold')
+
+
+def feature_selection_policy():
+    """Implementation authorization is distinct from official evaluation release."""
+    return dict(method='fold-local SelectFromModel', status='IMPLEMENTED',
+                scope='PRIMARY', k_values=list(FEATURE_COUNTS),
+                primary_method_implemented=True, training_cv_performed=True,
+                estimator='FoldAwareXGB', estimator_configuration='selected B3 parameters',
+                weight_mode='balanced', weight_scope='labels passed to each fit only',
+                importance_type='gain', importance_getter='feature_importances_',
+                threshold='-inf', prefit=False, norm_order=1,
+                max_features='exact k', tie_rule='descending unrounded gain; original column order on exact ties',
+                transform_order='original column order',
+                fit_scope='each training CV fold; full primary train refit for each k',
+                cv_interpretation='descriptive conditional on B3 selected using the same training CV; not nested CV',
+                selection_scope='reserved validation AP only', reference='A2 full-feature',
+                tolerance_ap=0.01, eligibility_numeric_tolerance=1e-12,
+                fallback='A2 full-feature', secondary_qa_method='SelectKBest(f_classif)',
+                secondary_used_for_primary_selection=False,
+                ordinal_representation='numeric codes; LR scales all inputs')
+
+
+def select_feature_budget(reference_ap, ap_by_k):
+    """Smallest validation-eligible budget; the full-feature A2 remains fallback."""
+    if set(ap_by_k) != set(FEATURE_COUNTS):
+        raise ValueError('Feature AP must cover exactly 21/15/10/5')
+    values = [reference_ap, *ap_by_k.values()]
+    if any(isinstance(v, (bool, np.bool_)) or not np.isfinite(v) or not 0 <= v <= 1 for v in values):
+        raise ValueError('Validation AP must be finite in [0, 1]')
+    eligible = [k for k in sorted(FEATURE_COUNTS) if reference_ap-ap_by_k[k] <= 0.01+1e-12]
+    return (min(eligible) if eligible else 21), eligible
 
 
 def sha256_file(path: str | Path) -> str:
@@ -164,6 +212,7 @@ def select_final_model(candidates, validation_ap):
 
 
 def optimal_f1_threshold(y, scores):
+    """Historical V2 QA helper; active A4 uses optimal_f2_threshold."""
     from sklearn.metrics import precision_recall_curve
     p,r,t=precision_recall_curve(y,np.asarray(scores))
     if not len(t):
@@ -172,6 +221,33 @@ def optimal_f1_threshold(y, scores):
                  out=np.zeros(len(t),dtype=float),where=(p[:-1]+r[:-1])>0)
     winners=np.flatnonzero(np.isclose(f1, np.max(f1), rtol=0, atol=1e-12))
     return float(np.max(t[winners]))  # tie -> highest threshold
+
+
+def f2_threshold_curve(y, scores):
+    """Evaluate the fixed ascending grid without allocating a rows-by-grid matrix."""
+    y, scores = np.asarray(y), np.asarray(scores, dtype=float)
+    if (y.ndim != 1 or scores.ndim != 1 or len(y) != len(scores)
+            or set(np.unique(y)) != {0, 1}):
+        raise ValueError('Validation labels/scores must align and contain both binary classes')
+    if not np.isfinite(scores).all() or (scores < 0).any() or (scores > 1).any():
+        raise ValueError('Validation scores must be finite probabilities in [0, 1]')
+    order = np.argsort(scores, kind='stable')
+    sorted_scores = scores[order]
+    cumulative = np.concatenate(([0], np.cumsum(y[order], dtype=np.int64)))
+    below = np.searchsorted(sorted_scores, F2_GRID, side='left')
+    positives = int(y.sum())
+    tp = positives - cumulative[below]
+    fn = positives - tp
+    fp = len(y) - below - tp
+    denominator = 5 * tp + 4 * fn + fp
+    values = np.divide(5 * tp, denominator, out=np.zeros(len(F2_GRID), dtype=float),
+                       where=denominator != 0)
+    return values
+
+
+def optimal_f2_threshold(y, scores):
+    # np.argmax returns the first exact maximum: smallest threshold, without tolerance.
+    return float(F2_GRID[int(np.argmax(f2_threshold_curve(y, scores)))])
 
 
 def metrics_at_threshold(y, prob, threshold=0.5):
@@ -186,6 +262,7 @@ def metrics_at_threshold(y, prob, threshold=0.5):
         recall=float(recall_score(y,pred,zero_division=0)),
         specificity=float(tn/(tn+fp)) if tn+fp else float('nan'),
         f1=float(f1_score(y,pred,zero_division=0)),
+        f2=float(fbeta_score(y,pred,beta=2,zero_division=0)),
         threshold=float(threshold),tn=int(tn),fp=int(fp),fn=int(fn),tp=int(tp))
 
 

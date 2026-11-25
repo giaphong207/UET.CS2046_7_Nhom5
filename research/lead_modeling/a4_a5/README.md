@@ -1,186 +1,117 @@
-# Diabetes Research Track 1.2 — Task A4 & A5 (V2)
+# Diabetes A4/A5 V3 — implementation and reproducibility guide
 
-> **Trạng thái bàn giao: CODE + MẪU BÁO CÁO, CHƯA CÓ KẾT QUẢ TRÊN KAGGLE CSV GỐC.**
-> Không dùng số liệu của chạy synthetic/quick cho SP2.
+The single canonical package is at repository-root `src/diabetes_research/`. It was relocated with `git mv`; there is no importable package in the old component `src/` directory. Configs, notebooks, historical PDFs/Word documents, ignored CSVs, virtual environments and existing results remain in this research component.
 
-Tài liệu nghiên cứu hiện có: `config/A2_protocol_v2.yaml` và A1/A2/A3 trong `docs/lead-modeling/` của repository. Đề bài giảng viên và `De_cuong_Diabetes (1).pdf` được nhắc tới nhưng chưa có trong workspace; chưa thể xác nhận tuân thủ các tài liệu này. [METHODOLOGY_NOTES.md](docs/METHODOLOGY_NOTES.md) đối chiếu phương pháp thực sự chạy với các tài liệu trước đó.
+**Status: software implementation tested; real TRAINING-ONLY GroupSplit AP analysis complete.** Official full-data A4/A5, E6–E9, and actual SHAP/LIME runtime remain pending. The primary fold-local SelectFromModel pipeline is implemented and software-tested with weighted B3-configured XGBoost gain ranking, exact budgets and deterministic ties. Official A4 stops at the separate evaluation-authorization gate. ANOVA is saved separately as secondary synthetic/quick QA, without CV or primary model selection.
 
-## 1. Nội dung và ranh giới công việc
+## Current scientific choices
 
-**A4 — Modeling:** B0 Dummy; B1 Logistic Regression, B2 Random Forest và B3 XGBoost được tuning bằng CV AP trên train. A1 dùng tham số B3 đã chọn, thêm class weighting và fit toàn bộ train; A2 dùng cùng A1 với ngưỡng tối đa F1 trên validation. A3 fit ANOVA `SelectKBest(f_classif)` và weighted XGBoost trên train cho 21/15/10/5 đặc trưng, chọn k trên validation. A1/A3 không có một search CV riêng. Test được đánh giá sau khi khóa mô hình/threshold.
+| Choice | V3 implementation |
+|---|---|
+| Population | All 253,680 original rows and labels; no feature deduplication or majority voting |
+| Primary metric | Exact sklearn Average Precision for CV/model ranking |
+| Primary outer split | Verified B v9 original-row archive, 70/30 then 50/50, stratified seed 42, returned order preserved |
+| Primary CV | Shuffled StratifiedKFold, 3 folds within primary training, seed 42; saved original-row fold IDs |
+| Baselines | Internally fitted B0 Dummy, B1 unweighted scaled LR, B2 unweighted RF, B3 actual unweighted XGBoost; no RF fallback |
+| A1/A2 | A1 reuses B3 parameters and adds full-training class weighting; A2 uses the same fitted model/scores and a validation F2 threshold |
+| Threshold | Positive-class F2, beta=2, ascending `np.linspace(0.01,0.99,199)`; exact ties choose the smallest threshold |
+| Reference | Separate validation/test reference CSVs at 0.5; AP and ROC-AUC stay invariant when only the threshold changes |
+| Feature reduction | Primary SelectFromModel: weighted B3-configured XGBoost gain, exact k=21/15/10/5, stable original-column ties, fold-local CV and full-training refits; ANOVA saved separately as QA |
+| Final choice | Highest validation AP; exact ties follow B1, B2, B3, A2, selected primary A3 |
+| Group sensitivity | Separate exact-X outer diagnostics and 3-fold Stratified-vs-StratifiedGroup CV on primary training only; fixed prespecified XGBoost |
+| Bootstrap | Exactly B2−B1, B3−B1, FINAL−B3; one locked A4 run, original test labels/cases, 1,000 attempts, seed 42, marginal 95% percentile CIs |
+| SHAP | Permutation, 500 explained rows and 100 training-background rows by default; deterministic source IDs, chunks of 25 and bounded prediction/mask batches |
+| LIME | Distinct `num_samples=1000`, unchanged |
 
-**A5 — Analysis:** biểu đồ PR/ROC, confusion matrix, calibration/Brier, paired bootstrap AP (1.000 lần), lỗi FP/FN, phân tích theo mã nhóm tuổi/giới, SHAP/LIME cho mô hình **cuối** khi được bật. Không thay đổi mô hình theo test. SHAP/LIME không phải bằng chứng nhân quả.
+The supplied v9 ZIP is independently confirmed as LightGBM: its two pipelines instantiate `lgb.LGBMClassifier`, tuning uses `num_leaves`, and the Kaggle log says LightGBM. Historical scores remain LightGBM evidence. Historical test results have already been seen; a new run does not establish an untouched confirmatory test. C's baseline outputs stay separate QA until predictions, fit settings, exact split indices and full source hash match. A4 fits its own baselines.
 
-**Stacking + Optuna:** chỉ là mở rộng chưa được triển khai trong gói này; đề cương mới không lấy Stacking làm baseline chính. Mô hình B1–B3 ở đây dùng `RandomizedSearchCV`, không phải Optuna. Không ghi A4 hoàn tất Stacking + Optuna nếu chưa làm phần mở rộng.
+The original binary CSV is described as the supplied `Diabetes_binary=1` survey label. Verified three-class 0/1/2 maps to binary 0/0/1 (213,703 / 4,631 / 35,346 rows); it does not support the old combined prediabetes/diabetes wording. Labels are preserved; creator-level clinical semantics remain unverified.
 
-## 2. Cài đặt trên macOS / VS Code
+## Installation and read-only verification on Mac
 
-```bash
-cd ~/Projects/UET.CS2046_7_Nhom5/research/lead_modeling/a4_a5
-python3 -m venv .venv-diabetes
-source .venv-diabetes/bin/activate
-python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
-# nếu muốn chạy SHAP & LIME:
-python -m pip install -r requirements-explain.txt
-# nếu muốn chạy tests:
-python -m pip install -r requirements-dev.txt
-```
-
-Hai notebook tự tìm component nested khi mở từ repository root, component hoặc thư mục `notebooks/`. Dùng kernel đã cài core dependencies; đường dẫn `data/`, `results/` và `scripts/` trong notebook luôn thuộc component.
-
-**Không ghi đè `src/`, `requirements.txt` hay README đang có của nhóm một cách máy móc.** Khi merge vào repo hiện có, giữ các file của nhóm và tích hợp dependencies/thư mục theo nhu cầu.
-
-Các lệnh cài đặt, chạy script và pytest dưới đây dùng **thư mục component** này. Từ repository root, đường dẫn tới script là `research/lead_modeling/a4_a5/scripts/run_a4.py`; đường dẫn data/output tương đối luôn tính theo working directory của lệnh.
-
-## 3. Dataset
-
-Nguồn: https://www.kaggle.com/datasets/alexteboul/diabetes-health-indicators-dataset
-
-Đặt file đúng tên trong `data/`:
-
-```text
-data/diabetes_binary_health_indicators_BRFSS2015.csv
-```
-
-Cần đúng 253.680 dòng và 21 feature. Program sẽ từ chối các CSV khác trong chế độ nghiên cứu thông thường. Dữ liệu được kiểm tra schema, miền giá trị, trùng vector, bất đồng nhãn và SHA256. BMI phải >0, không đặt thêm cutoff lâm sàng; các mã ordinal và số ngày phải nguyên trong miền mã hóa. Tên file, số dòng và checksum cục bộ không tự xác thực nguồn Kaggle. Không tự xóa vector trùng.
-
-## 4. Chạy A4 trên file Kaggle thật
+Commands use the **repository root**, with Python 3.11 or later. The existing virtual environment can stay in the component.
 
 ```bash
-python scripts/run_a4.py \
-  --data data/diabetes_binary_health_indicators_BRFSS2015.csv \
-  --output-dir results/a4_full_001 \
-  --trials 10 --cv 3
+cd /Users/humanormal/Projects/UET.CS2046_7_Nhom5
+source research/lead_modeling/a4_a5/.venv-diabetes311/bin/activate
+python -m pip install -e '.[dev]'
+python -m pip check
+python -m compileall -q src
+PYTHONPATH=src python -m pytest research/lead_modeling/a4_a5/tests -q
+python shared_splits/verify_shared_split.py --csv research/lead_modeling/a4_a5/data/diabetes_binary_health_indicators_BRFSS2015.csv
 ```
 
-- 70% train, 15% validation, 15% test; `seed=42`; lưu chỉ số chia tập.
-- Hyperparameter search dùng **3-fold Stratified CV trong train**, `scoring=average_precision`.
-- B1 dùng `StandardScaler` fit bên trong mỗi CV fold; các mã ordinal được xử lý như số, không có one-hot encoding.
-- B1/B2/B3 là baseline không có class weighting. `FoldAwareXGB.fit()` tính trọng số từ y được truyền vào mỗi lần fit; A1/A3 hiện truyền **toàn bộ train**, không chạy weighted CV riêng.
-- A3 dùng ANOVA `SelectKBest(f_classif)` fit trên train. Không báo cáo ranking CV/permutation importance hay độ ổn định giữa folds vì chưa thực hiện các phân tích đó.
-- Lựa chọn `k` nhỏ nhất đạt AP trên validation giảm **không quá 0,01 tuyệt đối** so với mô hình có weighting đầy đủ; chọn final theo AP validation.
-- Khi AP bằng nhau chính xác, thứ tự ưu tiên final là B1, B2, B3, A2, A3 với k đã chọn. Ngưỡng F1 hòa nhau ưu tiên ngưỡng cao nhất. Ngưỡng FINAL luôn chọn từ validation, kể cả khi final là B1/B2/B3; hàng baseline vẫn báo cáo ngưỡng 0.5.
-- Audit lưu số mẫu âm/dương và prevalence của từng split, cùng số vector X giống hệt nhau giữa từng cặp split. Vector giống nhau không xác định cùng cá nhân.
-- Chỉ sau khi chốt config, test mới được đánh giá. Không refit train+validation sau khi chọn threshold.
-- Mọi kết quả nằm dưới `results/` và sẽ không được `git add` mặc định.
+For explanations, install `python -m pip install -e '.[explain]'` in the same environment before creating the paired A4/A5 runs. Packaging supports an editable installation from the full repository; configs and the split archive are repository assets outside the Python wheel. Root requirements files forward to the preserved component dependency definitions. No environment lock is invented; runs save exact library versions and A5 requires compatible model-library versions.
 
-> **Ngân sách search:** mặc định 10 cấu hình/họ và 3 folds. B1 thay đổi duy nhất độ mạnh regularization L2 qua `C=[0.001, 0.003, 0.01, 0.03, 0.1, 0.3, 1, 3, 10, 30]`, giữ `class_weight=None`. Khi yêu cầu 15, B1 chỉ đánh giá 10 cấu hình khác nhau; không lặp cấu hình để tăng số đếm. Manifest và runtime config lưu ngân sách yêu cầu, ngân sách sau override, số cấu hình thực chạy, số CV/refit fits và trạng thái hết không gian hữu hạn. B2/B3 có không gian đủ cho 10–15 cấu hình. Chạy thật có thể tốn thời gian trên CPU; mọi override phải được công bố.
+The canonical CSV SHA-256 is `19f367e3e3350768f0c144c5d73ee5b355f67a57eaaa86ca7bd8aec594d8b1d0`; the exact archive SHA-256 is `26f95eee418ae5510ce7e2f27369f02cf3385104dadb0b327715ef924c11bae3`. The verifier checks full bytes, original row coverage, disjointness, original `.npy` hashes and exact two-stage membership/order. Missing or mismatched inputs fail without a generated fallback.
 
-**Kiểm tra code nhanh với CSV thật (không dùng để viết SP2):**
+## Synthetic quick A4 → A5
+
+Use new data/output names on repeat runs. This example only creates synthetic QA data, using the regression fixture's documented domain generator.
 
 ```bash
-python scripts/run_a4.py --data data/diabetes_binary_health_indicators_BRFSS2015.csv \
-  --output-dir results/a4_smoke_001 --quick
+PYTHONPATH=src:research/lead_modeling/a4_a5/tests python - <<'PYQA'
+from pathlib import Path
+from test_protocol import toy_data
+path = Path('/private/tmp/uet_diabetes_v3_synthetic.csv')
+toy_data(n=400).to_csv(path, index=False)
+print(path)
+PYQA
+python research/lead_modeling/a4_a5/scripts/run_a4.py --data /private/tmp/uet_diabetes_v3_synthetic.csv --output-dir research/lead_modeling/a4_a5/results/a4_v3_synthetic_001 --quick --demo
+python research/lead_modeling/a4_a5/scripts/run_a5.py --data /private/tmp/uet_diabetes_v3_synthetic.csv --a4-dir research/lead_modeling/a4_a5/results/a4_v3_synthetic_001 --output-dir research/lead_modeling/a4_a5/results/a5_v3_synthetic_001 --allow-smoke --bootstraps 1000
 ```
 
-`--quick` lấy tối đa 260 dòng (`min(260, N-2)`), dùng 1 trial/họ và 2 CV folds, đánh dấu `SMOKE_NOT_RESEARCH_RESULT`. `source_row_indices.npy` lưu map subset → vị trí dòng CSV gốc (0-based). Chỉ số split là vị trí trong subset; `test_predictions.csv:row_index` là vị trí trong CSV gốc, không phải ID cá nhân. Không được dùng làm bằng chứng nghiên cứu.
+Quick mode retains the old, explicitly labeled `qa_legacy_test_first_sorted` split on the seeded subset, 1 configuration/family and 2 CV folds. Its source-row mapping is verified. Synthetic full-row `--demo` can use 3-fold CV. Neither is a primary research run; A5 requires `--allow-smoke` and retains the QA status. Full original-population training cannot be released with `--demo`.
 
-**Kiểm tra code bằng CSV tổng hợp tự tạo:** chỉ dùng `--demo`, đầu ra được đánh dấu `SYNTHETIC_QA_ONLY` và A5 mặc định sẽ từ chối nếu không bật chế độ QA.
+Primary selector evidence is saved in `feature_selection_cv.csv`, `feature_selection_folds.json`, `feature_selection_models.joblib`, `feature_rankings.json` and `feature_sets.json`. A2 validation AP is fixed in `a2_reference_lock.json` before selector evaluation. Each k fits fresh weighted B3-configured gain rankers and downstream models in every training fold; stable exact ties use original columns. Reserved validation chooses the smallest eligible k within 0.01 AP of A2; A2 is fallback and selected A3 remains separately reported. CV AP is conditional on the B3 settings selected using the same folds, not nested CV. `secondary_anova.json` stays outside primary selection and test predictions.
 
-## 5. Chạy A5
+For synthetic three-fold integration, use `--demo --cv 3 --trials 10` without `--quick` on a new constructed CSV/output directory. The shared official split remains mandatory in official mode.
 
-A4 phải chạy thành công trên cùng CSV thật trước khi chạy A5:
+## Group sensitivity
+
+The sealed real **TRAINING-ONLY SENSITIVITY ANALYSIS** completed on 25 November 2026: Stratified mean AP **0.4362740784**, Grouped mean AP **0.4358097385**, Group minus Stratified **−0.0004643398**. All six folds use only the canonical primary training partition (177,576 rows, 162,300 exact-X groups); grouped folds have zero exact-X overlap. These are descriptive single-preset, single-seed CV results, not held-out performance, significance/equivalence evidence or a primary model-selection input. Official A4/A5 and actual SHAP/LIME remain pending.
+
+The 34 read-only artifacts remain at `results/real_training_only_group_cv_20261125T064729+0700_gmrgtd23/`; report `TRAINING_ONLY_SENSITIVITY_REPORT.md`, manifest SHA-256 `a6d2175121d9a5117f25da4d36ec7be720b01355353c0e6cfeb826af2297e644`. They are ignored experimental outputs, preserved locally and excluded from staging. The [remediation report](docs/FINAL_P2_REMEDIATION_REPORT.md) records integrity checks and historical source preservation. No real experiment was rerun during remediation.
+
+The default command only constructs/verifies the separate outer group partition. It fits no model and computes no held-out score:
 
 ```bash
-python scripts/run_a5.py \
-  --data data/diabetes_binary_health_indicators_BRFSS2015.csv \
-  --a4-dir results/a4_full_001 \
-  --output-dir results/a5_full_001 \
-  --bootstraps 1000
+python research/lead_modeling/a4_a5/scripts/run_group_sensitivity.py --data research/lead_modeling/a4_a5/data/diabetes_binary_health_indicators_BRFSS2015.csv --output-dir research/lead_modeling/a4_a5/results/group_v3_diagnostics_001
 ```
 
-Thêm giải thích cho mô hình cuối (chi phí có thể đáng kể):
+For any separately requested future run, `--train-cv` performs the prespecified six fits on primary **training** rows: three StratifiedKFold and three StratifiedGroupKFold folds. The unweighted estimator is frozen independently of A4 search winners. YAML and the approved amendment must match the canonical sensitivity contract; wrapper and actual native settings are checked before fitting. Drift fails without overrides. Report each fold's rows, groups and class prevalence, mean/std AP (`ddof=0`) and `mean AP Group − mean AP Stratified`. The outer split remains diagnostics only. A held-out group experiment requires a separately prespecified design/run ID; this CLI has no held-out group evaluation option.
+
+On the actual CSV, outer diagnostics found 177,254 / 38,006 / 38,420 rows, 159,535 / 34,186 / 34,187 exact-X groups, and zero group crossings. These are sensitivity design counts, not performance results. GroupShuffleSplit ratios target groups, so row ratios are approximate. Exact X equality never establishes a respondent identity, even when labels conflict.
+
+## Official command templates after review
+
+These are **blocked templates** pending separate official training/evaluation authorization. The selector is implemented; synthetic QA does not release official experiments. Current A4 stops before fitting/scoring at the authorization gate.
+
+Mac, from repository root:
 
 ```bash
-python scripts/run_a5.py \
-  --data data/diabetes_binary_health_indicators_BRFSS2015.csv \
-  --a4-dir results/a4_full_001 \
-  --output-dir results/a5_full_with_xai_001 \
-  --bootstraps 1000 --shap --lime
+python research/lead_modeling/a4_a5/scripts/run_a4.py --data research/lead_modeling/a4_a5/data/diabetes_binary_health_indicators_BRFSS2015.csv --output-dir research/lead_modeling/a4_a5/results/a4_v3_reviewed_001 --trials 10 --cv 3 --shared-split-indices shared_splits/shared_split_indices.npz --shared-split-manifest shared_splits/shared_split_manifest.json
+python research/lead_modeling/a4_a5/scripts/run_a5.py --data research/lead_modeling/a4_a5/data/diabetes_binary_health_indicators_BRFSS2015.csv --a4-dir research/lead_modeling/a4_a5/results/a4_v3_reviewed_001 --output-dir research/lead_modeling/a4_a5/results/a5_v3_reviewed_001 --bootstraps 1000 --shap --lime --shap-samples 500 --shap-background-samples 100
 ```
 
-A5 kiểm tra hash các artifact quan trọng trước khi load model; xác minh source code, Python major/minor và phiên bản chính xác của các thư viện model. A5 kiểm tra toàn bộ split phải rời nhau, đầy đủ và đúng seed; kiểm tra registry, model IDs, thứ tự feature, feature được selector chọn, threshold và metadata selection. Xác suất test được tính lại từ model đã serialize và so sánh CSV (`atol=1e-8`, `rtol=1e-7`); A5 dùng xác suất tính lại để tránh sai lệch ranking do round-trip CSV. Không refit hoặc thay threshold. Run cũ thiếu manifest v2 phải chạy lại A4; môi trường/source không khớp phải được khôi phục hoặc chạy lại trong môi trường thống nhất.
-
-Quick và full-row demo có thể kiểm thử A5 trên **cùng CSV nguồn** với `--allow-smoke`; A5 mặc định từ chối cả hai. Ví dụ sau vẫn là QA:
+Kaggle, after placing a reviewed **full repository copy** at the following working path and mounting the original Kaggle dataset. This local integration branch has not been pushed; do not assume GitHub contains V3 yet. Adjust the mount path if needed; verification still requires the exact CSV bytes.
 
 ```bash
-python scripts/run_a5.py --data data/diabetes_binary_health_indicators_BRFSS2015.csv \
-  --a4-dir results/a4_smoke_001 --output-dir results/a5_smoke_001 \
-  --allow-smoke --bootstraps 1000
+cd /kaggle/working/UET.CS2046_7_Nhom5
+python -m pip install -e '.[explain]'
+python shared_splits/verify_shared_split.py --csv /kaggle/input/diabetes-health-indicators-dataset/diabetes_binary_health_indicators_BRFSS2015.csv
+python research/lead_modeling/a4_a5/scripts/run_a4.py --data /kaggle/input/diabetes-health-indicators-dataset/diabetes_binary_health_indicators_BRFSS2015.csv --output-dir /kaggle/working/a4_v3_reviewed_001 --trials 10 --cv 3 --shared-split-indices shared_splits/shared_split_indices.npz --shared-split-manifest shared_splits/shared_split_manifest.json
+python research/lead_modeling/a4_a5/scripts/run_a5.py --data /kaggle/input/diabetes-health-indicators-dataset/diabetes_binary_health_indicators_BRFSS2015.csv --a4-dir /kaggle/working/a4_v3_reviewed_001 --output-dir /kaggle/working/a5_v3_reviewed_001 --bootstraps 1000 --shap --lime --shap-samples 500 --shap-background-samples 100
 ```
 
-Bootstrap dùng 1.000 **lần thử**, loại mẫu chỉ có một lớp và không lấy bù; summary lưu attempted/valid/excluded, seed 42, confidence 0.95 và percentile interval. Research A5 yêu cầu 1.000 lần thử; số khác chỉ cho QA và được ghi thành override. Subgroup CSV luôn giữ schema và mọi nhóm Sex/Age quan sát được, gồm n, positive_n, status và lý do withheld khi n<50 hoặc chỉ có một lớp. Quy tắc này không chứng minh đủ power hoặc công bằng y tế.
+## Artifact contract and review
 
-Mỗi lần chạy dùng **thư mục output mới** để tránh ghi đè hoặc lẫn phiên bản cũ. Các hash phát hiện thay đổi/lẫn artifact, không phải chữ ký xác thực người tạo.
+A4 manifest/registry schema is v3. Critical artifacts include protocol/amendment/exposure snapshots, effective settings, code/environment hashes, original source IDs, exact split metadata, training fold IDs, baseline CV traces, primary selector fold models/AP/rankings, F2 curves, reference metrics, feature sets, selection and fitted models. `selection_lock.json` binds pre-test artifacts before scoring. New source requires fresh A4/A5 run IDs; stale v2 or historical LightGBM outputs are rejected.
 
-**Cảnh báo an toàn:** `joblib.load()` dùng pickle; chỉ tải `fitted_models.joblib` do chính bạn hoặc nguồn được tin cậy tạo. Không đọc file model không đáng tin từ Internet.
+A5 checks byte hashes before loading trusted model pickles, then verifies source/environment, original cases/labels, folds, XGBoost internals, selectors, locked F2 decisions and reference metrics. It recomputes probabilities and uses exact model scores, preserving ties. It never calls fit or model/threshold selection routines. Hashes detect corruption/mixed runs; they do not authenticate an unknown pickle creator. Only load trusted model registries.
 
-## 6. File đầu ra dự kiến
+`paired_bootstrap_ap.csv` is a long-form table for exactly three core pairs. `paired_bootstrap_summary.json` contains observed point deltas, percentile CIs, sign conventions, bound comparison IDs, attempted/valid/excluded counts and self-comparison notices. `paired_bootstrap_exclusions.csv` logs single-class draws; attempts are not replaced. All pairs share one draw stream. CIs are conditional on fixed models and the test split, with marginal rather than simultaneous coverage. Extra A1/A3 bootstrap pairs remain PENDING separate approval.
 
-A4:
+SHAP CLI overrides are `--shap-samples`, `--shap-background-samples`, `--shap-chunk-size`, and `--shap-prediction-batch-size`; YAML provides defaults. An explicit Independent masker uses every selected background row, including configured counts above 100; actual counts cap at available rows. `shap_selected_source_rows.npz` and metadata save source IDs/settings before processing, and attribution metadata is completed only on success. LIME remains separate at 1,000 perturbations/case. Current tests of SHAP planning use a controlled stub; actual library success is unverified.
 
-- `manifest.json` v2: UUID run ID, UTC start/end, duration, dataset/source/artifact SHA256; `trials_per_family` là map số cấu hình **thực chạy**
-- `config.yaml` (snapshot nguyên văn protocol), `runtime_config.json` (CLI yêu cầu/effective, seeds, split/CV, full search spaces/counts, overrides), `source_identity.json` (hash cả code untracked), `versions.json`
-- `dataset_sha256.txt`, `dataset_audit.json`, `source_row_indices.npy`, `split_indices.npz`
-- `cv_results.csv` (config, AP từng fold/trung bình, fit time, rank)
-- `validation_metrics.csv` (chọn mô hình/threshold/feature count)
-- `test_metrics.csv`, `test_predictions.csv` (chỉ sau khóa lựa chọn), `ablation.csv` (mọi k trên validation; chỉ k đã chọn trên test)
-- `feature_sets.json`, `selection.json`, `fitted_models.joblib`
-
-A5:
-
-- `manifest_a5.json`, `analysis_config.json`, `versions_a5.json`, `source_identity_a5.json`, `artifact_verification.json`: liên kết run ID/hash A4, config/environment A5 và hash đầu ra
-- `precision_recall_test.png`, `roc_test.png`, `confusion_matrix_final.png`, `calibration_final.png`
-- `paired_bootstrap_ap.csv`, `paired_bootstrap_summary.json` (95% CI hiệu AP final - B3)
-- `error_cases.csv`, `case_selection.json`, `subgroups_test.csv`, `additional_metrics.csv`
-- (tùy chọn) `shap_beeswarm_final.png`, `shap_bar_final.png`, `shap_waterfall_final.png`, `shap_attributions.npz`, `shap_metadata.json`, `lime_FP/FN/TP.*`, `lime_metadata.json`, `lime_training_source_indices.npy`
-
-SHAP/LIME chưa được runtime-verify trong đợt fix hiện tại vì chưa cài các thư viện optional. Metadata mới ghi seed, model/run ID, sample/background source rows và settings; SHAP summary 15 dòng là summary trên mẫu, không phải toàn quần thể. Xem [CODEX_FIX_REPORT.md](docs/CODEX_FIX_REPORT.md) cho bằng chứng kiểm thử hiện tại và giới hạn; `docs/QA_REPORT.md` là ghi chép QA lịch sử.
-
-Runtime config lưu cả tham số cố định của từng pipeline/learner đã fit, không chỉ tham số được search. A5 đối chiếu các tham số này với registry và CV winner; CV trace phải chứa cấu hình riêng biệt hợp lệ và AP trung bình/std khớp từng fold. Thay đổi các lựa chọn khoa học cố định trong YAML phải được triển khai/đối chiếu trước khi chạy; code từ chối snapshot không phù hợp. CV folds và budget vẫn là CLI overrides công khai.
-
-Giới hạn phân tích hiện tại: CI chỉ cho FINAL minus B3; CI B2/B3 minus B1 theo câu hỏi baseline trong A1/A2 chưa được triển khai. Khi FINAL=B3, đây là self-comparison hợp lệ nhưng không cung cấp thông tin về khác biệt mô hình. Các PDF/Word trước đó là tài liệu lịch sử; phương pháp và lệnh hiện hành được đối chiếu tại `METHODOLOGY_NOTES.md`.
-
-## 7. Quy trình đảm bảo kết quả trung thực
-
-1. Không đưa số liệu từ file `synthetic` hoặc `quick` vào SP2.
-2. Không đánh giá model trên test khi vẫn đang tối ưu hyperparameters, chọn threshold hoặc số đặc trưng.
-3. Không học scaler/feature selector trên toàn bộ dữ liệu trước split/CV.
-4. AP của scikit-learn (`average_precision_score`) không đồng nhất với diện tích nội suy hình thang PR.
-5. Khoảng tin cậy bootstrap điều kiện theo mô hình đã huấn luyện; không phải độ bất định của toàn bộ quá trình nghiên cứu.
-6. Nhãn gộp tiền đái tháo đường/đái tháo đường trong khảo sát; không suy luận bệnh tương lai hay chỉ định lâm sàng.
-7. Nếu pipeline lỗi hoặc thiếu `lime`, sửa và kiểm thử; không tự tạo hình hay bảng kết quả để “cho đẹp”.
-8. Ghi **AI Usage Log** đầy đủ theo đề bài: prompt, câu trả lời, kiểm chứng, phần được dùng/loại bỏ.
-
-## 8. Kiểm thử tự động
-
-```bash
-PYTHONPATH=src python -m pytest tests -q
-```
-
-Bộ kiểm thử xác minh schema/domain, split/diagnostics, threshold/tie, weighting, paired bootstrap, subgroup schema, provenance/search counts, notebook paths, synthetic A4→A5 và fault injection các artifact không nhất quán. Đây chỉ là **code QA**; không thay thế thực nghiệm Kaggle thật. Output synthetic của pytest nằm trong thư mục tạm.
-
-## 9. Đưa lên branch cá nhân
-
-```bash
-cd ~/Projects/UET.CS2046_7_Nhom5
-git switch feature/lead-modeling-a
-git status
-git add research/lead_modeling/a4_a5/
-# Kiểm tra file sắp commit trước khi thực hiện:
-git diff --cached --stat
-git commit -m "feat(lead-modeling): add reproducible A4 and A5 pipeline"
-git push
-```
-
-Nếu repository đã có những file cùng tên, kiểm tra diff kỹ và merge có chọn lọc; **không `git add -f data/*.csv` hoặc commit thư mục `results/`**.
-
-## 10. Tài liệu tham khảo kỹ thuật
-
-- Scikit-learn Average Precision: https://scikit-learn.org/stable/modules/generated/sklearn.metrics.average_precision_score.html
-- Scikit-learn permutation importance: https://scikit-learn.org/stable/modules/permutation_importance.html
-- XGBoost parameters: https://xgboost.readthedocs.io/en/stable/parameter.html
-- SHAP TreeExplainer (tham khảo mở rộng): https://shap.readthedocs.io/en/stable/generated/shap.TreeExplainer.html
-
-**Cần kiểm chứng tương thích phiên bản trên môi trường của nhóm trước khi chạy đầy đủ.**
+The notebooks retain their historical filenames, with V3 content, root resolution and empty outputs. Use a reviewed **full repository copy** containing root `src/diabetes_research/`, component V3 config/amendment, all scripts/notebooks, `shared_splits/` archive/manifest/verifier and root packaging/dependency metadata. A component-only mount is insufficient. In a local clean copy, start from its root, component or notebooks directory. On Kaggle, copy the full layout to a writable directory such as `/kaggle/working/UET.CS2046_7_Nhom5` and change the notebook working directory to that root before the first cell. Discovery searches cwd and parents and rejects incomplete layouts. Mount the original CSV separately and set `DATA` to its mount; keep new output paths writable. Editable installation uses that full repository root. Path checks are software-tested; actual Kaggle and SHAP/LIME runtime are pending. See [METHODOLOGY_NOTES.md](docs/METHODOLOGY_NOTES.md), [A5 report template](docs/A5_Results_Discussion_Template.md), and [PROTOCOL_AMENDMENTS_V3.json](config/PROTOCOL_AMENDMENTS_V3.json). The two pre-existing audit/proposal documents are preserved byte-for-byte as historical evidence; their old paths and proposed F1/selector wording do not override V3 instructions.
