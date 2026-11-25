@@ -1,0 +1,64 @@
+{
+  "task": "S7_group_vector_cv",
+  "checks": {
+    "QA01_data_and_index_hash": "PASS",
+    "QA02_group_ids": "PASS",
+    "QA03_fold_integrity": "PASS",
+    "QA04_group_overlap": "PASS",
+    "QA05_oof_alignment": "PASS",
+    "QA06_score_range": "PASS",
+    "QA07_ap_12_of_12": "PASS",
+    "QA08_auc_12_of_12": "PASS",
+    "QA09_cv_summary": "PASS",
+    "QA10_historical_reproduction": "PASS",
+    "QA11_artifacts_16_of_16": "PASS"
+  },
+  "checks_passed_before_packaging": 11,
+  "ap_matches": 12,
+  "ap_total": 12,
+  "auc_matches": 12,
+  "auc_total": 12,
+  "historical_AP_match_4dp": {
+    "B1_logistic": true,
+    "B2_random_forest": true
+  },
+  "overlap_counts": {
+    "StratifiedKFold": 19078,
+    "GroupKFold": 0
+  },
+  "results": [
+    {
+      "model": "B1_logistic",
+      "historical_cv_AP": 0.4071,
+      "stratified_cv_AP": 0.4070683400274318,
+      "stratified_AP_std": 0.003854416576846762,
+      "group_cv_AP": 0.4070899482424925,
+      "group_AP_std": 0.003016607847698674,
+      "delta_AP_group_minus_stratified": 2.1608215060697766e-05,
+      "stratified_cv_AUC": 0.8225216361408845,
+      "group_cv_AUC": 0.8224525824711858,
+      "delta_AUC": -6.9053669698671e-05,
+      "historical_AP_match_4dp": true
+    },
+    {
+      "model": "B2_random_forest",
+      "historical_cv_AP": 0.4304,
+      "stratified_cv_AP": 0.43036043675158525,
+      "stratified_AP_std": 0.004653210548230904,
+      "group_cv_AP": 0.43068717777324905,
+      "group_AP_std": 0.0033985699562844316,
+      "delta_AP_group_minus_stratified": 0.00032674102166380115,
+      "stratified_cv_AUC": 0.8268940054375271,
+      "group_cv_AUC": 0.8268220232942286,
+      "delta_AUC": -7.198214329851016e-05,
+      "historical_AP_match_4dp": true
+    }
+  ],
+  "scope": "train_only",
+  "limitations": [
+    "GroupKFold does not guarantee stratification.",
+    "CV standard deviation is not a confidence interval.",
+    "Results do not establish statistical equivalence.",
+    "Holdout test independence is not established."
+  ]
+}
