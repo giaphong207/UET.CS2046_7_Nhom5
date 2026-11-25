@@ -1,0 +1,25 @@
+{
+  "status": "PROVISIONAL_NEEDS_CSV_AND_TEAM_APPROVAL",
+  "archive_origin": "user supplied Task B v9 ZIP",
+  "input_zip_sha256": "2bc3d1eb891ca0d8adc5bb32b87e1421511f93ab953e52ea10d86b29574522b9",
+  "expected_dataset_basename": "diabetes_binary_health_indicators_BRFSS2015.csv",
+  "expected_dataset_full_sha256_from_user_terminal": "19f367e3e3350768f0c144c5d73ee5b355f67a57eaaa86ca7bd8aec594d8b1d0",
+  "dataset_sha256_independently_verified_in_this_runtime": false,
+  "split_recipe": "3-way stratified seed42 B v9, 70/30 then 50/50; reproduce against CSV on user machine",
+  "sizes": {
+    "train": 177576,
+    "validation": 38052,
+    "test": 38052
+  },
+  "original_n_rows": 253680,
+  "arrays_in_zip_sha256": {
+    "train": "a38179b95ad36c91e9f854fb04f5b5363ee0a1a914d6aecddad7927d0e06980c",
+    "validation": "79f88fe005e85637edf0e9025e577016ce87cfe6cd77afe99d84e85f3b7baedd",
+    "test": "3fec435659e49612f6e30653c519188d7dc8218cbd398bcdae2f7509ab1d3c87"
+  },
+  "integrated_A4A5": false,
+  "uses_original_row_positions": true,
+  "all_positions_unique_and_cover_complete_raw_population": true,
+  "group_split_type": "This is the ordinary row-based primary split, NOT the alternative group-aware sensitivity split.",
+  "note": "The B v9 code/reports are LightGBM, not XGBoost; do not cite those performance results as XGBoost."
+}
