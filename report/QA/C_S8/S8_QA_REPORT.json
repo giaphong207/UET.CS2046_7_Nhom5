@@ -1,0 +1,84 @@
+{
+  "task": "S8",
+  "scope": "SYNTHETIC ONLY",
+  "status": "SYNTHETIC_QA_PASS",
+  "total_tests": 25,
+  "total_passed": 25,
+  "checks": {
+    "bootstrap": {
+      "T01_A_vs_B": "PASS",
+      "T02_identical_models": "PASS",
+      "T03_reverse_direction": "PASS",
+      "T04_seed_reproducibility": "PASS",
+      "T05_single_class_handling": "PASS"
+    },
+    "visualization": {
+      "V01_python_syntax": "PASS",
+      "V02_module_import": "PASS",
+      "V03_generate_four_figures": "PASS",
+      "V04_png_integrity": "PASS"
+    },
+    "advanced": {
+      "E01_wrong_index_order": "PASS",
+      "E02_duplicate_index": "PASS",
+      "E03_label_mismatch": "PASS",
+      "E04_non_binary_label": "PASS",
+      "E05_single_class_input": "PASS",
+      "E06_nan_scores": "PASS",
+      "E07_infinite_scores": "PASS",
+      "E08_out_of_range_scores": "PASS",
+      "E09_length_mismatch": "PASS",
+      "E10_missing_npz_key": "PASS",
+      "E11_source_hash_mismatch": "PASS",
+      "E12_model_identity_mismatch": "PASS",
+      "E13_bootstrap_csv_mismatch": "PASS",
+      "E14_weighted_metric_recomputation": "PASS",
+      "E15_bootstrap_cli": "PASS",
+      "E16_visualization_cli": "PASS"
+    }
+  },
+  "additional_packaging_checks": {
+    "source_hashes": "PASS",
+    "saved_result_ci_recomputation": "PASS"
+  },
+  "verified_bootstrap_draws": 20,
+  "source_hashes": {
+    "c_bootstrap.py": "9a6923b4b8de3bbae67118de5654b9431742b69702208c044e0f1783f4007143",
+    "c_make_figures.py": "b3b55d9463cccc86fd44fa6636d21dbe0ddc40786cdb540f06ef9cd9e6abf7ef"
+  },
+  "synthetic_results": [
+    {
+      "model_A": "synthetic_A",
+      "model_B": "synthetic_B",
+      "metric": "AP",
+      "observed_A": 0.3033572395936486,
+      "observed_B": 0.4006298870528426,
+      "observed_delta": 0.097272647459194,
+      "bootstrap_mean_delta": 0.09650283604562158,
+      "bootstrap_std": 0.005848616258653582,
+      "ci_lower": 0.08428664894499834,
+      "ci_upper": 0.10794507907180434,
+      "ci_contains_zero": false,
+      "confidence": 0.95,
+      "n_bootstrap": 1000
+    },
+    {
+      "model_A": "synthetic_A",
+      "model_B": "synthetic_B",
+      "metric": "ROC_AUC",
+      "observed_A": 0.6954545177175564,
+      "observed_B": 0.7624031031403635,
+      "observed_delta": 0.06694858542280713,
+      "bootstrap_mean_delta": 0.06706282197221243,
+      "bootstrap_std": 0.0026461984587666954,
+      "ci_lower": 0.062025047988990785,
+      "ci_upper": 0.07234874446666356,
+      "ci_contains_zero": false,
+      "confidence": 0.95,
+      "n_bootstrap": 1000
+    }
+  ],
+  "real_data_evaluation_completed": false,
+  "final_integration_completed": false,
+  "team_cross_review_completed": false
+}
