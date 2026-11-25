@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "uet-diabetes-research"
+version = "0.3.0"
+description = "Reproducible UET BRFSS A4/A5 research and sensitivity analysis"
+readme = "README.md"
+requires-python = ">=3.11"
+dynamic = ["dependencies"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8,<10"]
+explain = ["shap>=0.46,<1", "lime>=0.2.0.1,<1"]
+
+[project.scripts]
+diabetes-a4 = "diabetes_research.modeling:main"
+diabetes-a5 = "diabetes_research.analysis:main"
+diabetes-verify-split = "diabetes_research.shared_splits:main"
+diabetes-group-sensitivity = "diabetes_research.group_sensitivity:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["research/lead_modeling/a4_a5/requirements.txt"]}
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["research/lead_modeling/a4_a5/tests"]
