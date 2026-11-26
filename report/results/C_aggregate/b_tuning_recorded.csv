@@ -1,0 +1,3 @@
+model,n_estimators,learning_rate,max_depth,cv_AP,source_id,source_row,source_path,source_sha256,model_id
+primary,150,0.1,4,0.4365,SRC001,1.0,B/report/results/B2_B3/hyperparams_search.csv,e3128b68305afaa8b9029ee52cbd5b9913728edde65eab9789333ea56841062c,B__primary__none
+random_forest,300,,12,0.4304,SRC001,2.0,B/report/results/B2_B3/hyperparams_search.csv,e3128b68305afaa8b9029ee52cbd5b9913728edde65eab9789333ea56841062c,B__random_forest__none

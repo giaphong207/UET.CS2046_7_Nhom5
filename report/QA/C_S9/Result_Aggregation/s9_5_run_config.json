@@ -1,0 +1,46 @@
+{
+  "task": "S9.5_result_aggregation",
+  "scope": "HISTORICAL_NON_TEST",
+  "created_utc": "2026-11-26T17:12:33.612855+00:00",
+  "seed_reference": 42,
+  "primary_metric": "Average Precision",
+  "source_registry_sha256": "6056188ba850e34c9d6c81d5ea39dbcfabd154b782a15abc2aa43dc3480284a4",
+  "script_sha256": "8abc4bbdcec57113fd2e6ed667e6dcf123900b64b3a6ddfd7357f72af9dc5a2b",
+  "source_owners": [
+    "B",
+    "C"
+  ],
+  "source_files": 34,
+  "source_csv_files": 29,
+  "source_csv_rows": 230,
+  "model_configurations": 38,
+  "cv_records": 34,
+  "validation_configurations": 19,
+  "validation_records": 32,
+  "feature_cv_records": 25,
+  "group_cv_comparisons": 3,
+  "validation_threshold_rules": [
+    "thr_0.5",
+    "thr_val_maxF1",
+    "thr_val_maxF2"
+  ],
+  "protocol_reference": {
+    "split_ratio": [
+      0.7,
+      0.15,
+      0.15
+    ],
+    "stratified": true,
+    "seed": 42,
+    "preprocessing_fit_scope": "train or CV training fold only",
+    "test_based_selection_allowed": false,
+    "protocol_compliance_fully_reverified": false
+  },
+  "model_training": false,
+  "raw_brfss_used": false,
+  "test_metrics_aggregation": false,
+  "final_evaluation": false,
+  "official_pipeline_selected": false,
+  "team_cross_review_completed": false,
+  "team_approval_status": "PENDING"
+}

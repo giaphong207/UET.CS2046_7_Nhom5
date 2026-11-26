@@ -1,0 +1,11 @@
+feature,imp_mean,imp_std,source_id,source_row,source_path,source_sha256
+BMI,0.0798,0.0034,SRC011,1.0,B/report/results/B4/b4_permutation_importance.csv,69fcd279d648e2882560f842890916bbe15946fc0ec3f215586509043d33963d
+GenHlth,0.0764,0.0025,SRC011,2.0,B/report/results/B4/b4_permutation_importance.csv,69fcd279d648e2882560f842890916bbe15946fc0ec3f215586509043d33963d
+Age,0.0367,0.0016,SRC011,3.0,B/report/results/B4/b4_permutation_importance.csv,69fcd279d648e2882560f842890916bbe15946fc0ec3f215586509043d33963d
+HighBP,0.0289,0.0024,SRC011,4.0,B/report/results/B4/b4_permutation_importance.csv,69fcd279d648e2882560f842890916bbe15946fc0ec3f215586509043d33963d
+HighChol,0.0265,0.0025,SRC011,5.0,B/report/results/B4/b4_permutation_importance.csv,69fcd279d648e2882560f842890916bbe15946fc0ec3f215586509043d33963d
+HvyAlcoholConsump,0.0068,0.0011,SRC011,6.0,B/report/results/B4/b4_permutation_importance.csv,69fcd279d648e2882560f842890916bbe15946fc0ec3f215586509043d33963d
+HeartDiseaseorAttack,0.0055,0.001,SRC011,7.0,B/report/results/B4/b4_permutation_importance.csv,69fcd279d648e2882560f842890916bbe15946fc0ec3f215586509043d33963d
+DiffWalk,0.0052,0.0006,SRC011,8.0,B/report/results/B4/b4_permutation_importance.csv,69fcd279d648e2882560f842890916bbe15946fc0ec3f215586509043d33963d
+CholCheck,0.0046,0.0007,SRC011,9.0,B/report/results/B4/b4_permutation_importance.csv,69fcd279d648e2882560f842890916bbe15946fc0ec3f215586509043d33963d
+Sex,0.0039,0.0006,SRC011,10.0,B/report/results/B4/b4_permutation_importance.csv,69fcd279d648e2882560f842890916bbe15946fc0ec3f215586509043d33963d

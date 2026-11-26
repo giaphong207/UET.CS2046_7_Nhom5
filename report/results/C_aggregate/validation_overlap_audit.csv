@@ -1,0 +1,3 @@
+model_id_A,model_id_B,threshold_rule,source_id_A,source_row_A,source_id_B,source_row_B,recorded_metrics_match,prediction_identity_verified,interpretation
+B__primary__class_weight,B__B4__all_features,thr_0.5,SRC004,11,SRC008,1,True,False,Matching reported metrics; not independent evidence
+B__primary__class_weight,B__B4__all_features,thr_val_maxF2,SRC004,12,SRC008,2,True,False,Matching reported metrics; not independent evidence

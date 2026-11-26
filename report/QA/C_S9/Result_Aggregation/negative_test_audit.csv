@@ -1,0 +1,6 @@
+test,returncode,expected_message,invalid_execution_rejected,status
+Q06_corrupted_source_rejected,1,Hash mismatch,True,PASS
+Q07_corrupted_registry_rejected,1,AssertionError,True,PASS
+Q08_nonempty_output_rejected,1,Output directory must be empty,True,PASS
+Q09_nested_output_rejected,1,Output must be outside input directory,True,PASS
+Q10_optimized_python_rejected,1,Run without Python optimization,True,PASS

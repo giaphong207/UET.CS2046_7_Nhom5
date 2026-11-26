@@ -1,0 +1,9 @@
+method_A,method_B,k,cv_AP_A,cv_AP_B,source_id,source_row_A,source_row_B,recorded_AP_match,prediction_identity_verified
+xgb_gain,rfe_xgb,21,0.436,0.436,SRC006,18.0,22.0,True,False
+xgb_gain,rfe_xgb,15,0.4352,0.4352,SRC006,19.0,23.0,True,False
+xgb_gain,rfe_xgb,10,0.4316,0.4316,SRC006,20.0,24.0,True,False
+xgb_gain,rfe_xgb,5,0.3673,0.3673,SRC006,21.0,25.0,True,False
+variance,corr_dedup,21,0.436,0.436,SRC006,2.0,6.0,True,False
+variance,corr_dedup,15,0.428,0.428,SRC006,3.0,7.0,True,False
+variance,corr_dedup,10,0.4136,0.4136,SRC006,4.0,8.0,True,False
+variance,corr_dedup,5,0.353,0.353,SRC006,5.0,9.0,True,False

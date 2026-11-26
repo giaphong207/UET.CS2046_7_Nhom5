@@ -1,0 +1,2 @@
+selected_method,k,cv_AP,cv_recall_1,cv_f1_macro,cv_AP_full21,delta_AP_vs_full,delta_tol,rule,strategy,seed,n_folds,source_id,source_row,source_path,source_sha256
+xgb_gain,10,0.4316,0.796,0.6248,0.436,-0.0044,0.01,tap rut gon nho nhat co AP giam <= 0.01 tuyet doi so voi 21 bien (de cuong 2.2); tie-break F1macro >= max-0.01,class_weight,42,3,SRC007,1.0,B/report/results/B4/b4_selected_config.csv,747fb3c3b60608529f7426a705738ed26f643b31fd54d9cd6bd6228d07aedb01

@@ -1,0 +1,2 @@
+chosen_strategy,rule,cv_AP,cv_recall_1,seed,n_folds,source_id,source_row,source_path,source_sha256
+class_weight,"AP cao nhat trong nhom F1macro >= max-0.01, tie-break recall_1",0.436,0.7954,42,3,SRC003,1.0,B/report/results/B2_B3/chosen_strategy.csv,dbf0dbc4e7e1345bfce72f373976030b4d2848701dace71afc8cb09bc588ca87

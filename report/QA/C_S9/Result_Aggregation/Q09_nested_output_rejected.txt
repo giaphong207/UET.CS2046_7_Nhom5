@@ -1,0 +1,20 @@
+Return code: 1
+
+=== STDOUT ===
+
+
+=== STDERR ===
+Traceback (most recent call last):
+  File "/kaggle/working/S9_5/c_aggregate_results.py", line 2425, in <module>
+    main()
+    ~~~~^^
+  File "/kaggle/working/S9_5/c_aggregate_results.py", line 2415, in main
+    result_dir = aggregate(
+        input_root=args.input_root,
+        out_dir=args.out_dir
+    )
+  File "/kaggle/working/S9_5/c_aggregate_results.py", line 38, in aggregate
+    raise ValueError(
+        "Output must be outside input directory."
+    )
+ValueError: Output must be outside input directory.

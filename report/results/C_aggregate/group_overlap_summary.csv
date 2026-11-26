@@ -1,0 +1,3 @@
+method,n_eval_total,shared_eval_rows_total,shared_groups_mean,index_overlap_total,shared_eval_rate,source_id,source_row,source_path,source_sha256
+GroupKFold,177576,0,0.0,0,0.0,SRC030,1.0,C/report/results/C_group_cv/s7_overlap_summary.csv,44375cfcceae0b8c59b0ee303f5462d8f6cb03d5143592ffdd501c5c4d4fcc21
+StratifiedKFold,177576,19078,4292.666666666667,0,0.1074356895075911,SRC030,2.0,C/report/results/C_group_cv/s7_overlap_summary.csv,44375cfcceae0b8c59b0ee303f5462d8f6cb03d5143592ffdd501c5c4d4fcc21

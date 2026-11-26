@@ -1,0 +1,29 @@
+{
+  "task": "S9_5_final_packaging",
+  "status": "PASS",
+  "scope": "HISTORICAL_NON_TEST",
+  "script_sha256": "8abc4bbdcec57113fd2e6ed667e6dcf123900b64b3a6ddfd7357f72af9dc5a2b",
+  "zip_filename": "S9_5_QA_Evidence.zip",
+  "zip_sha256": "07efc024ae26d0a194a46307bb0e0057a4cc38416cbb878685aa0c9aee6b961a",
+  "zip_bytes": 95818,
+  "zip_files": 79,
+  "manifest_entries": 78,
+  "verified_manifest_entries": 78,
+  "result_files": 27,
+  "qa_files": 10,
+  "input_snapshot_files": 35,
+  "packaging_checks": {
+    "P01_final_QA_and_script_lock": "PASS",
+    "P02_result_integrity_27_of_27": "PASS",
+    "P03_QA_evidence_10_of_10": "PASS",
+    "P04_original_sources_34_of_34": "PASS",
+    "P05_clean_package_inventory": "PASS",
+    "P06_manifest_78_of_78": "PASS",
+    "P07_zip_created": "PASS",
+    "P08_zip_integrity_78_of_78": "PASS",
+    "P09_final_zip_published": "PASS"
+  },
+  "packaging_checks_passed": 9,
+  "team_approval_status": "PENDING",
+  "final_evaluation_performed": false
+}

@@ -1,0 +1,4 @@
+model_id,owner,stratified_cv_AP,group_cv_AP,delta_AP,delta_AUC,source_id_stratified,source_row_stratified,source_id_group,source_row_group
+B__primary__class_weight,B,0.436,0.435,-0.0010000000000000009,,SRC005,1.0,SRC005,2.0
+C__B1_logistic,C,0.4070683400274318,0.4070899482424925,2.1608215060697766e-05,-6.9053669698671e-05,SRC027,2.0,SRC027,1.0
+C__B2_random_forest,C,0.4303604367515852,0.430687177773249,0.00032674102166380115,-7.198214329851016e-05,SRC027,4.0,SRC027,3.0

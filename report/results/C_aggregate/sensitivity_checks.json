@@ -1,0 +1,14 @@
+{
+  "S01_imbalance_coverage": "PASS",
+  "S02_recorded_strategy_rule": "PASS",
+  "S03_feature_cv_coverage": "PASS",
+  "S04_recorded_feature_selection": "PASS",
+  "S05_feature_validation": "PASS",
+  "S06_selected_feature_lists": "PASS",
+  "S07_permutation_importance": "PASS",
+  "S08_feature_method_overlap": "PASS",
+  "S09_threshold_sensitivity": "PASS",
+  "S10_group_cv_summary": "PASS",
+  "S11_group_cv_deltas": "PASS",
+  "S12_group_overlap_audit": "PASS"
+}

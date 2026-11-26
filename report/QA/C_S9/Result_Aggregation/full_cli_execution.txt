@@ -1,0 +1,367 @@
+Return code: 0
+
+=== STDOUT ===
+=== S9.5 ENVIRONMENT ===
+Python: 3.13.18
+NumPy: 2.1.3
+Pandas: 2.3.3
+
+Seed: 42
+Primary metric: AP
+Scope: Existing CV and validation results
+
+Input root: /kaggle/input/datasets/dinhgiaphong/ai-midterm-s9-aggregation-inputs/S9_5_inputs
+Output: /tmp/s9_reproduction_zvc9l8bu/reproduced_results
+
+=== SAFETY PROTOCOL ===
+Model training: NO
+Raw BRFSS required: NO
+Test metrics aggregation: NO
+FINAL evaluation: NO
+
+S9.5 CELL 1: PASS
+=== LOCATE INPUT DATA ===
+Input mode: Extracted directory
+Source root: /kaggle/input/datasets/dinhgiaphong/ai-midterm-s9-aggregation-inputs/S9_5_inputs
+[PASS] Source registry
+[PASS] SRC001 | B | hyperparams_search.csv
+[PASS] SRC002 | B | grid_model_x_resample.csv
+[PASS] SRC003 | B | chosen_strategy.csv
+[PASS] SRC004 | B | val_metrics.csv
+[PASS] SRC005 | B | group_split_sensitivity.csv
+[PASS] SRC006 | B | b4_feature_selection_cv.csv
+[PASS] SRC007 | B | b4_selected_config.csv
+[PASS] SRC008 | B | b4_val_metrics.csv
+[PASS] SRC009 | B | b4_selected_features.csv
+[PASS] SRC010 | B | b4_k15_features.csv
+[PASS] SRC011 | B | b4_permutation_importance.csv
+[PASS] SRC012 | B | locked_config.json
+[PASS] SRC013 | B | b4_locked_config.json
+[PASS] SRC014 | C | results_C_baseline_none.csv
+[PASS] SRC015 | C | results_C_appendix_decision_tree.csv
+[PASS] SRC016 | C | results_C_baseline_none.csv
+[PASS] SRC017 | C | tune_C_logistic.csv
+[PASS] SRC018 | C | tune_C_random_forest.csv
+[PASS] SRC019 | C | tune_C_decision_tree.csv
+[PASS] SRC020 | C | results_C_xie_appendix_X1_X3_X4.csv
+[PASS] SRC021 | C | results_C_xie_appendix_X2_X5.csv
+[PASS] SRC022 | C | tune_C_X1_gaussian_nb.csv
+[PASS] SRC023 | C | tune_C_X2_mlp.csv
+[PASS] SRC024 | C | tune_C_X3_svm_linear.csv
+[PASS] SRC025 | C | tune_C_X4_logistic_SMOTE.csv
+[PASS] SRC026 | C | tune_C_X5_random_forest_SMOTE.csv
+[PASS] SRC027 | C | s7_all_cv_summary.csv
+[PASS] SRC028 | C | s7_all_fold_results.csv
+[PASS] SRC029 | C | s7_model_comparison.csv
+[PASS] SRC030 | C | s7_overlap_summary.csv
+[PASS] SRC031 | C | s7_fold_audit.csv
+[PASS] SRC032 | C | README.md
+[PASS] SRC033 | C | README.md
+[PASS] SRC034 | C | s7_run_config.json
+
+=== SOURCE INVENTORY BY OWNER ===
+owner  n_files
+    B       13
+    C       21
+
+=== SOURCE INVENTORY BY CATEGORY ===
+             category  n_files
+              context        5
+         cv_imbalance        3
+            cv_tuning        3
+        cv_tuning_xie        5
+           feature_cv        2
+     feature_metadata        3
+   feature_validation        1
+             group_cv        6
+threshold_sensitivity        1
+           validation        3
+       validation_xie        2
+
+=== SOURCE AUDIT SUMMARY ===
+Source files: 34
+CSV files: 29
+Total CSV rows: 230
+Verified: 34 / 34
+Output: /tmp/s9_reproduction_zvc9l8bu/reproduced_results
+
+S9.5 CELL 2: PASS
+[PASS] Source tables loaded
+
+=== B: IMBALANCE CONFIGURATIONS ===
+B imbalance configurations: 26
+
+=== B: FEATURE CONFIGURATIONS ===
+B feature configurations: 3
+
+=== C: BASELINE AND XIE ===
+SRC014 | 3 models
+SRC015 | 1 models
+SRC020 | 3 models
+SRC021 | 2 models
+
+[PASS] Unique model identifiers
+[PASS] Model registry counts
+[PASS] F1/F2 configuration links
+[PASS] Source-row provenance: 38/38
+
+=== REGISTRY BY OWNER ===
+owner  n_configurations
+    B                29
+    C                 9
+
+=== REGISTRY BY EXPERIMENT ===
+owner experiment_family  n_configurations
+    B feature_selection                 3
+    B    imbalance_grid                26
+    C          baseline                 3
+    C baseline_appendix                 1
+    C      xie_appendix                 5
+
+=== MODEL REGISTRY ===
+                 model_id owner         model_family     strategy  n_features  has_validation source_id  source_row
+           B__dummy__none     B                Dummy         none          21            True    SRC002           1
+        B__logistic__none     B  Logistic Regression         none          21            True    SRC002           2
+B__logistic__class_weight     B  Logistic Regression class_weight          21           False    SRC002           3
+       B__logistic__smote     B  Logistic Regression        smote          21           False    SRC002           4
+      B__logistic__adasyn     B  Logistic Regression       adasyn          21           False    SRC002           5
+ B__logistic__undersample     B  Logistic Regression  undersample          21           False    SRC002           6
+                      ...   ...                  ...          ...         ...             ...       ...         ...
+    C__APPX_decision_tree     C        Decision Tree         none          21            True    SRC015           1
+        C__X1_gaussian_nb     C Gaussian Naive Bayes         none          21            True    SRC020           1
+         C__X3_svm_linear     C           Linear SVM         none          21            True    SRC020           2
+     C__X4_logistic_SMOTE     C  Logistic Regression        smote          21            True    SRC020           3
+                C__X2_mlp     C                  MLP         none          21            True    SRC021           1
+C__X5_random_forest_SMOTE     C        Random Forest        smote          21            True    SRC021           2
+
+=== REGISTRY SUMMARY ===
+Total configurations: 38
+Configurations with validation: 19
+Unique model IDs: 38
+Source provenance verified: 38/38
+Model training: NO
+Test evaluation: NO
+Output: /tmp/s9_reproduction_zvc9l8bu/reproduced_results/model_registry.csv
+
+S9.5 CELL 3: PASS
+=== B: IMBALANCE GRID CV ===
+[PASS] B imbalance CV: 26/26
+
+=== C: HYPERPARAMETER TUNING ===
+[PASS] C__B1_logistic: AP=0.4071, row=1, ties=1
+[PASS] C__B2_random_forest: AP=0.4304, row=7, ties=1
+[PASS] C__APPX_decision_tree: AP=0.4058, row=6, ties=1
+[PASS] C__X1_gaussian_nb: AP=0.3494, row=7, ties=1
+[PASS] C__X2_mlp: AP=0.4312, row=6, ties=1
+[PASS] C__X3_svm_linear: AP=0.4062, row=10, ties=8
+[PASS] C__X4_logistic_SMOTE: AP=0.4048, row=1, ties=1
+[PASS] C__X5_random_forest_SMOTE: AP=0.4058, row=8, ties=1
+
+[PASS] Consolidated CV tables
+
+=== B: TUNING PARAMETERS ===
+[PASS] B recorded tuning parameters: 2/2
+[SAVED] cv_summary.csv | Rows: 34
+[SAVED] c_tuning_candidates.csv | Rows: 80
+[SAVED] b_tuning_recorded.csv | Rows: 2
+[SAVED] cv_coverage_pending.csv | Rows: 4
+
+=== CV SUMMARY ===
+                 model_id               cv_kind  cv_AP  cv_AP_std source_id  source_row
+           B__dummy__none        imbalance_grid 0.1393     0.0000    SRC002           1
+        B__logistic__none        imbalance_grid 0.4065     0.0041    SRC002           2
+B__logistic__class_weight        imbalance_grid 0.4050     0.0043    SRC002           3
+       B__logistic__smote        imbalance_grid 0.4042     0.0046    SRC002           4
+      B__logistic__adasyn        imbalance_grid 0.4028     0.0049    SRC002           5
+ B__logistic__undersample        imbalance_grid 0.4051     0.0039    SRC002           6
+                      ...                   ...    ...        ...       ...         ...
+    C__APPX_decision_tree hyperparameter_tuning 0.4058     0.0036    SRC019           6
+        C__X1_gaussian_nb hyperparameter_tuning 0.3494     0.0031    SRC022           7
+                C__X2_mlp hyperparameter_tuning 0.4312     0.0039    SRC023           6
+         C__X3_svm_linear hyperparameter_tuning 0.4062     0.0035    SRC024          10
+     C__X4_logistic_SMOTE hyperparameter_tuning 0.4048     0.0045    SRC025           1
+C__X5_random_forest_SMOTE hyperparameter_tuning 0.4058     0.0048    SRC026           8
+
+=== COVERAGE ===
+           model_id owner experiment_family                          reason
+B__B4__all_features     B feature_selection   Feature CV handled separately
+    B__B4__selected     B feature_selection   Feature CV handled separately
+B__B4__k15_xgb_gain     B feature_selection   Feature CV handled separately
+        C__B0_dummy     C          baseline No C dummy CV source in package
+
+=== FINAL SUMMARY ===
+CV summary: 34
+C tuning candidates: 80
+B recorded tuning rows: 2
+Recorded C selections: 8
+Model training: NO
+Test evaluation: NO
+
+S9.5 CELL 4: PASS
+=== VALIDATION SOURCE AUDIT ===
+[PASS] SRC004: 14 rows
+[PASS] SRC008: 6 rows
+[PASS] SRC014: 3 rows
+[PASS] SRC015: 1 rows
+[PASS] SRC016: 3 rows
+[PASS] SRC020: 3 rows
+[PASS] SRC021: 2 rows
+
+[PASS] Validation coverage: 19/19
+[PASS] Confusion matrix metrics: 288/288
+[PASS] Threshold rule separation
+[PASS] AP and ROC-AUC invariant across recorded thresholds
+[PASS] Recorded threshold comparisons
+[PASS] B all-feature reference overlap documented
+[SAVED] validation_summary.csv | Rows: 32
+[SAVED] validation_main_F2.csv | Rows: 19
+[SAVED] validation_default_05.csv | Rows: 10
+[SAVED] validation_sensitivity_F1.csv | Rows: 3
+[SAVED] validation_metrics_recomputed.csv | Rows: 288
+[SAVED] validation_overlap_audit.csv | Rows: 2
+
+=== MAIN VALIDATION RESULTS: MAX F2 ===
+                 model_id     AP  auc_roc  threshold  f2_class1  precision_1  recall_1  specificity source_id  source_row
+           B__dummy__none 0.1393   0.5000     0.0100     0.4474       0.1393    1.0000       0.0000    SRC004           2
+        B__logistic__none 0.4039   0.8209     0.1090     0.5987       0.2806    0.8355       0.6533    SRC004           4
+   B__decision_tree__none 0.1923   0.6003     0.4010     0.3261       0.2893    0.3369       0.8660    SRC004           6
+   B__random_forest__none 0.4231   0.8238     0.1387     0.5978       0.2946    0.8050       0.6880    SRC004           8
+         B__primary__none 0.4258   0.8285     0.1139     0.6033       0.2837    0.8399       0.6567    SRC004          10
+ B__primary__class_weight 0.4256   0.8281     0.4604     0.6039       0.2897    0.8286       0.6711    SRC004          12
+                      ...    ...      ...        ...        ...          ...       ...          ...       ...         ...
+    C__APPX_decision_tree 0.3956   0.8135     0.0941     0.5869       0.2551    0.8695       0.5891    SRC015           1
+        C__X1_gaussian_nb 0.3491   0.7895     0.0298     0.5797       0.2688    0.8155       0.6408    SRC020           1
+         C__X3_svm_linear 0.4029   0.8208     0.1040     0.6011       0.2780    0.8474       0.6437    SRC020           2
+     C__X4_logistic_SMOTE 0.4013   0.8194     0.4208     0.5971       0.2820    0.8286       0.6585    SRC020           3
+                C__X2_mlp 0.4261   0.8274     0.1139     0.6028       0.2821    0.8421       0.6531    SRC021           1
+C__X5_random_forest_SMOTE 0.4042   0.8168     0.2030     0.5955       0.2830    0.8227       0.6625    SRC021           2
+
+=== THRESHOLD RULE COVERAGE ===
+threshold_rule  n_rows
+       thr_0.5      10
+ thr_val_maxF1       3
+ thr_val_maxF2      19
+
+=== METRIC RECOMPUTATION ===
+      metric  count      max
+    accuracy     32 0.000050
+balanced_acc     32 0.000050
+   f1_class1     32 0.000050
+    f1_macro     32 0.000046
+   f2_class1     32 0.000049
+         mcc     32 0.000049
+ precision_1     32 0.000049
+    recall_1     32 0.000046
+ specificity     32 0.000048
+
+=== FINAL SUMMARY ===
+Validation records: 32
+Max F2 records: 19
+Default 0.5 records: 10
+Max F1 records: 3
+Unique configurations: 19
+Recomputed metrics: 288 / 288
+Maximum absolute error: 0.0000499394
+Documented overlap rows: 2
+Model training: NO
+Test evaluation: NO
+
+S9.5 CELL 5: PASS
+=== IMBALANCE ANALYSIS ===
+[PASS] S01_imbalance_coverage | Elapsed: 0.00s
+[PASS] S02_recorded_strategy_rule | Elapsed: 0.01s
+
+=== FEATURE SELECTION ===
+[PASS] S03_feature_cv_coverage | Elapsed: 0.03s
+[PASS] S04_recorded_feature_selection | Elapsed: 0.04s
+[PASS] S05_feature_validation | Elapsed: 0.04s
+[PASS] S06_selected_feature_lists | Elapsed: 0.06s
+[PASS] S07_permutation_importance | Elapsed: 0.07s
+[PASS] S08_feature_method_overlap | Elapsed: 0.08s
+
+=== THRESHOLD SENSITIVITY ===
+[PASS] S09_threshold_sensitivity | Elapsed: 0.09s
+
+=== GROUP-VECTOR CV ===
+[PASS] S10_group_cv_summary | Elapsed: 0.13s
+[PASS] S11_group_cv_deltas | Elapsed: 0.13s
+[PASS] S12_group_overlap_audit | Elapsed: 0.14s
+
+=== SAVED TABLES ===
+[SAVED] imbalance_summary.csv | Rows: 26
+[SAVED] imbalance_selected_strategy.csv | Rows: 1
+[SAVED] feature_selection_summary.csv | Rows: 25
+[SAVED] feature_selected_config.csv | Rows: 1
+[SAVED] feature_validation_summary.csv | Rows: 3
+[SAVED] selected_feature_registry.csv | Rows: 25
+[SAVED] permutation_importance.csv | Rows: 10
+[SAVED] feature_method_overlap.csv | Rows: 8
+[SAVED] threshold_sensitivity_summary.csv | Rows: 13
+[SAVED] group_cv_summary.csv | Rows: 6
+[SAVED] group_cv_comparison.csv | Rows: 3
+[SAVED] group_overlap_summary.csv | Rows: 2
+[SAVED] group_fold_audit.csv | Rows: 6
+
+=== FEATURE SELECTION SUMMARY ===
+    method  k  cv_AP  delta_AP_vs_full21  within_AP_tolerance
+  baseline 21 0.4360              0.0000                 True
+  variance 21 0.4360              0.0000                 True
+  variance 15 0.4280             -0.0080                 True
+  variance 10 0.4136             -0.0224                False
+  variance  5 0.3530             -0.0830                False
+corr_dedup 21 0.4360              0.0000                 True
+       ... ..    ...                 ...                  ...
+  xgb_gain 10 0.4316             -0.0044                 True
+  xgb_gain  5 0.3673             -0.0687                False
+   rfe_xgb 21 0.4360              0.0000                 True
+   rfe_xgb 15 0.4352             -0.0008                 True
+   rfe_xgb 10 0.4316             -0.0044                 True
+   rfe_xgb  5 0.3673             -0.0687                False
+
+=== THRESHOLD SENSITIVITY ===
+                model_id             comparison  delta_AP  delta_f2_class1  delta_precision_1  delta_recall_1
+          B__dummy__none       thr_0.5_to_maxF2       0.0           0.4474             0.1393          1.0000
+       B__logistic__none       thr_0.5_to_maxF2       0.0           0.4106            -0.2563          0.6737
+  B__decision_tree__none       thr_0.5_to_maxF2       0.0           0.0000             0.0000          0.0000
+  B__random_forest__none       thr_0.5_to_maxF2       0.0           0.4723            -0.2975          0.7001
+        B__primary__none       thr_0.5_to_maxF2       0.0           0.4126            -0.2777          0.6762
+B__primary__class_weight       thr_0.5_to_maxF2       0.0           0.0041            -0.0144          0.0361
+                     ...                    ...       ...              ...                ...             ...
+     B__B4__all_features       thr_0.5_to_maxF2       0.0           0.0041            -0.0144          0.0361
+         B__B4__selected       thr_0.5_to_maxF2       0.0           0.0033            -0.0172          0.0411
+     B__B4__k15_xgb_gain       thr_0.5_to_maxF2       0.0           0.0041            -0.0143          0.0358
+             C__B0_dummy thr_val_maxF1_to_maxF2       0.0           0.0000             0.0000          0.0000
+          C__B1_logistic thr_val_maxF1_to_maxF2       0.0           0.0501            -0.0861          0.2129
+     C__B2_random_forest thr_val_maxF1_to_maxF2       0.0           0.0536            -0.0848          0.1945
+
+=== GROUP CV COMPARISON ===
+                model_id owner  stratified_cv_AP  group_cv_AP  delta_AP  delta_AUC source_id_stratified  source_row_stratified source_id_group  source_row_group
+B__primary__class_weight     B          0.436000     0.435000 -0.001000        NaN               SRC005                    1.0          SRC005               2.0
+          C__B1_logistic     C          0.407068     0.407090  0.000022  -0.000069               SRC027                    2.0          SRC027               1.0
+     C__B2_random_forest     C          0.430360     0.430687  0.000327  -0.000072               SRC027                    4.0          SRC027               3.0
+
+=== GROUP OVERLAP ===
+         method  n_eval_total  shared_eval_rows_total  shared_groups_mean  index_overlap_total  shared_eval_rate source_id  source_row                                        source_path                                                    source_sha256
+     GroupKFold        177576                       0            0.000000                    0          0.000000    SRC030         1.0 C/report/results/C_group_cv/s7_overlap_summary.csv 44375cfcceae0b8c59b0ee303f5462d8f6cb03d5143592ffdd501c5c4d4fcc21
+StratifiedKFold        177576                   19078         4292.666667                    0          0.107436    SRC030         2.0 C/report/results/C_group_cv/s7_overlap_summary.csv 44375cfcceae0b8c59b0ee303f5462d8f6cb03d5143592ffdd501c5c4d4fcc21
+
+=== FINAL SUMMARY ===
+Imbalance configurations: 26
+Feature CV records: 25
+Feature validation records: 3
+Threshold comparisons: 13
+Group CV records: 6
+Group CV comparisons: 3
+Tables saved: 13
+Sensitivity QA: 12 / 12
+Model training: NO
+Test evaluation: NO
+Cell 6 execution time: 0.16 seconds
+
+S9.5 CELL 6: PASS
+
+Aggregation output: /tmp/s9_reproduction_zvc9l8bu/reproduced_results
+S9.5 AGGREGATION: PASS
+
+
+=== STDERR ===

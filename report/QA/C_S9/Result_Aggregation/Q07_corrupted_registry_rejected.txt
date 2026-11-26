@@ -1,0 +1,41 @@
+Return code: 1
+
+=== STDOUT ===
+=== S9.5 ENVIRONMENT ===
+Python: 3.13.18
+NumPy: 2.1.3
+Pandas: 2.3.3
+
+Seed: 42
+Primary metric: AP
+Scope: Existing CV and validation results
+
+Input root: /tmp/s9_negative_tests_8pknt9_9/input_copy
+Output: /tmp/s9_negative_tests_8pknt9_9/bad_registry_output
+
+=== SAFETY PROTOCOL ===
+Model training: NO
+Raw BRFSS required: NO
+Test metrics aggregation: NO
+FINAL evaluation: NO
+
+S9.5 CELL 1: PASS
+=== LOCATE INPUT DATA ===
+Input mode: Extracted directory
+Source root: /tmp/s9_negative_tests_8pknt9_9/input_copy
+
+
+=== STDERR ===
+Traceback (most recent call last):
+  File "/kaggle/working/S9_5/c_aggregate_results.py", line 2425, in <module>
+    main()
+    ~~~~^^
+  File "/kaggle/working/S9_5/c_aggregate_results.py", line 2415, in main
+    result_dir = aggregate(
+        input_root=args.input_root,
+        out_dir=args.out_dir
+    )
+  File "/kaggle/working/S9_5/c_aggregate_results.py", line 202, in aggregate
+    assert sha256_file(REGISTRY_PATH) == EXPECTED_REGISTRY_HASH
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError

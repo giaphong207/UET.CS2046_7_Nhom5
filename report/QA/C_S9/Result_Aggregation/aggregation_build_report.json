@@ -1,0 +1,96 @@
+{
+  "task": "S9_5_aggregation_script_build",
+  "scope": "HISTORICAL_NON_TEST",
+  "script_name": "c_aggregate_results.py",
+  "script_sha256": "8abc4bbdcec57113fd2e6ed667e6dcf123900b64b3a6ddfd7357f72af9dc5a2b",
+  "script_bytes": 58405,
+  "script_lines": 2425,
+  "source_cells": [
+    {
+      "cell": 1,
+      "execution_id": 1,
+      "original_source_sha256": "de6af1d7409e2e1f111f93547c8a10ab24e33ed3e6b4cb74855a1b306d9c9592"
+    },
+    {
+      "cell": 2,
+      "execution_id": 2,
+      "original_source_sha256": "0c74adbb7ba6858f24a5317874004cc855276b1c8a4f29ef8affda22b42b66e8"
+    },
+    {
+      "cell": 3,
+      "execution_id": 3,
+      "original_source_sha256": "c97d5fec79d4abb4fa51fb3e70a9d48e6987bb166398dc43028f7ef96a0560b7"
+    },
+    {
+      "cell": 4,
+      "execution_id": 4,
+      "original_source_sha256": "eaf7c68a0bd0a23354df3b9ad23986e8c337b90ac747accfe38a1dd52af7c100"
+    },
+    {
+      "cell": 5,
+      "execution_id": 5,
+      "original_source_sha256": "0f50ab715377267e8950e54515917ad99d5fef89e27151a04afc98591f45bc6b"
+    },
+    {
+      "cell": 6,
+      "execution_id": 6,
+      "original_source_sha256": "61c1fc1c3961b5f9f1f40bfae9517b9e32dab5314e104391491f655134202c23"
+    }
+  ],
+  "adapted_cell1_sha256": "3c8154df270cc89b688b065d01e82f1953e08290be7c0f839f6c21f35aeb2b74",
+  "adaptations": [
+    "Parameterized input directory",
+    "Parameterized output directory",
+    "Replaced IPython display with console output",
+    "Wrapped notebook cells in aggregate function",
+    "Added command-line interface",
+    "Require new or empty output directory",
+    "Reject Python optimized execution"
+  ],
+  "expected_csv_outputs": {
+    "source_integrity_audit.csv": 34,
+    "source_registry.csv": 34,
+    "model_registry.csv": 38,
+    "cv_summary.csv": 34,
+    "c_tuning_candidates.csv": 80,
+    "b_tuning_recorded.csv": 2,
+    "cv_coverage_pending.csv": 4,
+    "validation_summary.csv": 32,
+    "validation_main_F2.csv": 19,
+    "validation_default_05.csv": 10,
+    "validation_sensitivity_F1.csv": 3,
+    "validation_metrics_recomputed.csv": 288,
+    "validation_overlap_audit.csv": 2,
+    "imbalance_summary.csv": 26,
+    "imbalance_selected_strategy.csv": 1,
+    "feature_selection_summary.csv": 25,
+    "feature_selected_config.csv": 1,
+    "feature_validation_summary.csv": 3,
+    "selected_feature_registry.csv": 25,
+    "permutation_importance.csv": 10,
+    "feature_method_overlap.csv": 8,
+    "threshold_sensitivity_summary.csv": 13,
+    "group_cv_summary.csv": 6,
+    "group_cv_comparison.csv": 3,
+    "group_overlap_summary.csv": 2,
+    "group_fold_audit.csv": 6
+  },
+  "expected_json_outputs": [
+    "sensitivity_checks.json"
+  ],
+  "checks": {
+    "B01_previous_output_coverage_26_of_26": "PASS",
+    "B02_sensitivity_QA_12_of_12": "PASS",
+    "B03_notebook_source_recovery": "PASS",
+    "B04_cli_path_adaptation": "PASS",
+    "B05_standalone_script_created": "PASS",
+    "B06_notebook_logic_preserved": "PASS",
+    "B07_python_syntax": "PASS",
+    "B08_cli_help": "PASS"
+  },
+  "total_checks": 8,
+  "total_passed": 8,
+  "full_cli_execution_verified": false,
+  "model_training": false,
+  "test_evaluation": false
+}

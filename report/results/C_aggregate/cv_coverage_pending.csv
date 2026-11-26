@@ -1,0 +1,5 @@
+model_id,owner,experiment_family,reason
+B__B4__all_features,B,feature_selection,Feature CV handled separately
+B__B4__selected,B,feature_selection,Feature CV handled separately
+B__B4__k15_xgb_gain,B,feature_selection,Feature CV handled separately
+C__B0_dummy,C,baseline,No C dummy CV source in package
