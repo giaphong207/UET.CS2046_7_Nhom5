@@ -1,0 +1,18 @@
+{
+  "label_cross_tabulation.csv": {
+    "sha256": "6781c2844361555dfd3ca05ae5c5dea5f2e24d6433201540efe1d335d11b8935",
+    "bytes": 57
+  },
+  "label_hypothesis_results.csv": {
+    "sha256": "12189c92976c025c892a4b04ab54a6727023c35ece3f327be2c6ed421f2f265a",
+    "bytes": 97
+  },
+  "S9_LABEL_AUDIT_REPORT.json": {
+    "sha256": "a152f269cf5134dc40dd226beefe23de2c94aa160af041d39121e9ac22cd85e4",
+    "bytes": 2020
+  },
+  "README_S9_Label_Audit.md": {
+    "sha256": "d4e256248b79b7e0699dbefa6ac753dae5e9608832ada3e926b96b14adbbb05c",
+    "bytes": 559
+  }
+}
